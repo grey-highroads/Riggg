@@ -30,13 +30,13 @@ All colors extracted from canonical seed images (factory exterior, gnome charact
 
 Each accent color is owned by exactly one RIGGG product feature. Accents appear ONLY as inner glow inside translucent glass elements — never as surface paint on machines or architecture.
 
-| Token | Hex | Feature | Status |
-|---|---|---|---|
-| `accent-green` | `#4CAF50` | TBD | ⬜ Needs feature mapping |
-| `accent-blue` | `#2196F3` | TBD | ⬜ Needs feature mapping |
-| `accent-purple` | `#9C27B0` | TBD | ⬜ Needs feature mapping |
-| `accent-red` | `#E91E63` | TBD | ⬜ Needs feature mapping |
-| `accent-amber` | `#FF9800` | TBD | ⬜ Needs feature mapping |
+| Token | Hex | Feature | Machine | Gnome |
+|---|---|---|---|---|
+| `accent-green` | `#4CAF50` | **Produce** — Capture & create source media | The Capture Rig | Spark |
+| `accent-purple` | `#9C27B0` | **Package** — Turn source into publishable assets | The Assembly Press | Crafter |
+| `accent-blue` | `#2196F3` | **Publish** — Distribute across owned & shared channels | The Distribution Engine | Router |
+| `accent-red` | `#E91E63` | **Prove** — Measure performance & business impact | The Insight Scope | Lens |
+| `accent-amber` | `#FF9800` | **Preserve** — Make content compound over time | The Memory Vault | Keeper |
 
 ### Accent glow rendering
 When an accent color appears in glass, it should:
@@ -96,11 +96,11 @@ When an accent color appears in glass, it should:
   --color-neutral-300: #B0A898;
   --color-neutral-100: #E8DCC8;
 
-  /* Rename these once features are mapped */
-  --color-feature-green: #4CAF50;
-  --color-feature-blue: #2196F3;
-  --color-feature-purple: #9C27B0;
-  --color-feature-red: #E91E63;
-  --color-feature-amber: #FF9800;
+  /* Feature Accents — mapped to 5Ps */
+  --color-produce: #4CAF50;
+  --color-package: #9C27B0;
+  --color-publish: #2196F3;
+  --color-prove: #E91E63;
+  --color-preserve: #FF9800;
 }
 ```
