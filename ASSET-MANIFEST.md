@@ -10,7 +10,7 @@ Machines:      {machine}_{feature}-{color}.png   → capture-rig_produce-green.p
 Environments:  {type}-{number}.png               → factory-exterior-1.png
 ```
 
-Variants when needed: append `-{variant}` before `.png` (e.g., `spark_produce-green-portrait.png`)
+Variants when needed: append `-{variant}` before `.png` (e.g., `spark_produce-green-2.png`)
 
 ---
 

@@ -4,7 +4,7 @@
 
 | Asset | Filename | Use For |
 |---|---|---|
-| Factory floor wide | `canonical/factory-interior-hero.png` | How-it-works sections, process overviews, pipeline illustrations |
+| Factory floor wide | `canonical/factory-interior-1.png` | How-it-works sections, process overviews, pipeline illustrations |
 
 ## Composition Rules
 
