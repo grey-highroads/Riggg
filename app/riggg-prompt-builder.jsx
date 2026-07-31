@@ -250,6 +250,12 @@ export default function RigggPromptBuilder() {
   const [notes, setNotes] = useState("");
   const [built, setBuilt] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [apiKey, setApiKey] = useState("");
+  const [showKeyInput, setShowKeyInput] = useState(false);
+  const [genState, setGenState] = useState("idle"); // idle | fetching-refs | generating | done | error
+  const [genMessage, setGenMessage] = useState("");
+  const [genImage, setGenImage] = useState(null); // base64 data URL
+  const [genError, setGenError] = useState("");
 
   // Use live data if synced, otherwise fallback
   var activeMachines = liveMachines || MACHINES;
@@ -326,6 +332,147 @@ export default function RigggPromptBuilder() {
       setCopied(true);
       setTimeout(function() { setCopied(false); }, 2000);
     });
+  }
+
+  function doGenerate() {
+    if (!apiKey.trim()) {
+      setShowKeyInput(true);
+      return;
+    }
+
+    setGenState("fetching-refs");
+    setGenMessage("Fetching reference images from repo...");
+    setGenImage(null);
+    setGenError("");
+
+    // Build raw GitHub URLs for reference images
+    var refUrls = refs.map(function(filename) {
+      // Find the full path in the repo for this filename
+      var paths = [];
+      activeMachines.forEach(function(m) { if (m.refs.indexOf(filename) !== -1) paths.push("machines/" + m.id + "/canonical/" + filename); });
+      activeChars.forEach(function(c) { if (c.refs.indexOf(filename) !== -1) paths.push("characters/" + c.id + "/canonical/" + filename); });
+      activeEnvs.forEach(function(e) { if (e.refs.indexOf(filename) !== -1) paths.push("environments/" + e.id + "/canonical/" + filename); });
+      return paths[0] ? "https://raw.githubusercontent.com/" + REPO + "/main/" + paths[0] : null;
+    }).filter(Boolean);
+
+    // Fetch reference images as base64
+    Promise.all(refUrls.map(function(url) {
+      return fetch(url)
+        .then(function(r) { return r.blob(); })
+        .then(function(blob) {
+          return new Promise(function(resolve) {
+            var reader = new FileReader();
+            reader.onload = function() { resolve(reader.result); };
+            reader.readAsDataURL(blob);
+          });
+        });
+    })).then(function(base64Images) {
+      setGenState("generating");
+      setGenMessage("Sending to renderer — this takes 30-60 seconds...");
+
+      // Build the messages array with reference images + prompt
+      var content = [];
+
+      // Add reference images
+      base64Images.forEach(function(dataUrl, i) {
+        content.push({
+          type: "image_url",
+          image_url: { url: dataUrl, detail: "high" }
+        });
+      });
+
+      // Add the generation instruction
+      content.push({
+        type: "text",
+        text: "Using the attached images as strict style references for materials, lighting, color palette, rendering quality, and character proportions, generate a new image following this specification exactly:\n\n" + prompt
+      });
+
+      return fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer " + apiKey.trim()
+        },
+        body: JSON.stringify({
+          model: "gpt-4o",
+          messages: [{ role: "user", content: content }],
+          max_tokens: 1000
+        })
+      });
+    }).then(function(response) {
+      if (!response.ok) {
+        return response.json().then(function(err) {
+          throw new Error(err.error ? err.error.message : "API error " + response.status);
+        });
+      }
+      return response.json();
+    }).then(function(data) {
+      // Extract image from response
+      var imageContent = null;
+      if (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) {
+        var msgContent = data.choices[0].message.content;
+        // Check if content is an array (multimodal response)
+        if (Array.isArray(msgContent)) {
+          msgContent.forEach(function(part) {
+            if (part.type === "image_url" || part.type === "image") {
+              imageContent = part.image_url ? part.image_url.url : (part.source ? "data:image/png;base64," + part.source.data : null);
+            }
+          });
+        }
+        // Check for image in output_image format
+        if (!imageContent && data.choices[0].message.content) {
+          // GPT-4o returns images inline - check for base64
+          var textContent = typeof msgContent === "string" ? msgContent : "";
+          if (textContent.indexOf("data:image") !== -1) {
+            var imgMatch = textContent.match(/(data:image\/[^;]+;base64,[^\s"]+)/);
+            if (imgMatch) imageContent = imgMatch[1];
+          }
+        }
+      }
+
+      // Also check for the newer image generation response format
+      if (!imageContent && data.choices && data.choices[0] && data.choices[0].message) {
+        var msg = data.choices[0].message;
+        // Check for images in content array
+        if (Array.isArray(msg.content)) {
+          for (var ci = 0; ci < msg.content.length; ci++) {
+            var block = msg.content[ci];
+            if (block.type === "image" && block.source) {
+              imageContent = "data:" + (block.source.media_type || "image/png") + ";base64," + block.source.data;
+              break;
+            }
+          }
+        }
+      }
+
+      if (imageContent) {
+        setGenImage(imageContent);
+        setGenState("done");
+        setGenMessage("");
+      } else {
+        // The model may have responded with text instead of an image
+        var responseText = "";
+        if (data.choices && data.choices[0] && data.choices[0].message) {
+          var rc = data.choices[0].message.content;
+          responseText = typeof rc === "string" ? rc : JSON.stringify(rc);
+        }
+        setGenState("error");
+        setGenError("Model returned text instead of an image. You may need to use the DALL-E API or try again. Response: " + responseText.substring(0, 200));
+      }
+    }).catch(function(err) {
+      console.error("Generation failed:", err);
+      setGenState("error");
+      setGenError(err.message || "Generation failed");
+    });
+  }
+
+  function doDownload() {
+    if (!genImage) return;
+    var link = document.createElement("a");
+    link.href = genImage;
+    var assetName = machs[0] || chars[0] || "riggg-asset";
+    link.download = assetName + "_" + (topic.trim().replace(/\s+/g, "-").substring(0, 30) || "generated") + ".png";
+    link.click();
   }
 
   function reset() {
@@ -503,11 +650,66 @@ export default function RigggPromptBuilder() {
           <textarea style={Object.assign({}, inputBase, { marginTop: 8, resize: "vertical" })} rows={2} value={notes} onChange={function(e) { setNotes(e.target.value); }} placeholder="Additional direction — mood, specific props, composition..." />
         </div>
 
+        {/* API Key (collapsible) */}
+        <div style={{ paddingTop: 20 }}>
+          <div onClick={function() { setShowKeyInput(!showKeyInput); }} style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer", fontSize: 12.5, color: "#707060" }}>
+            <span style={{ transform: showKeyInput ? "rotate(90deg)" : "rotate(0)", transition: "transform 0.15s", display: "inline-block" }}>▶</span>
+            <span>{apiKey ? "✓ OpenAI API key set" : "Set OpenAI API key for image generation"}</span>
+          </div>
+          {showKeyInput && (
+            <div style={{ marginTop: 8 }}>
+              <input
+                type="password"
+                style={Object.assign({}, inputBase, { maxWidth: 400 })}
+                value={apiKey}
+                onChange={function(e) { setApiKey(e.target.value); }}
+                placeholder="sk-..."
+              />
+              <div style={{ fontSize: 11, color: "#B0A898", marginTop: 4 }}>Stored in memory only — never saved or transmitted except to OpenAI's API.</div>
+            </div>
+          )}
+        </div>
+
         {/* Compile */}
-        <div style={{ display: "flex", gap: 10, padding: "24px 0 16px" }}>
+        <div style={{ display: "flex", gap: 10, padding: "16px 0 16px" }}>
           <button onClick={function() { setBuilt(true); }} disabled={!ready} style={{ padding: "12px 24px", fontSize: 14, fontWeight: 600, fontFamily: "'DM Sans', sans-serif", background: ready ? "#0A5858" : "#B0A898", color: "#FAF5EF", border: "none", borderRadius: 8, cursor: ready ? "pointer" : "not-allowed" }}>Compile Prompt</button>
+          {built && prompt && apiKey && (
+            <button onClick={doGenerate} disabled={genState === "fetching-refs" || genState === "generating"} style={{ padding: "12px 24px", fontSize: 14, fontWeight: 600, fontFamily: "'DM Sans', sans-serif", background: genState === "generating" || genState === "fetching-refs" ? "#707060" : "#4CAF50", color: "#FAF5EF", border: "none", borderRadius: 8, cursor: genState === "generating" ? "wait" : "pointer", display: "flex", alignItems: "center", gap: 8 }}>
+              {genState === "fetching-refs" || genState === "generating" ? "Generating..." : "Generate Image"}
+            </button>
+          )}
           {(assetType || machs.length > 0) && <button onClick={reset} style={{ padding: "12px 18px", fontSize: 13, fontFamily: "'DM Sans', sans-serif", background: "transparent", color: "#707060", border: "1px solid #E8DCC8", borderRadius: 8, cursor: "pointer" }}>Reset</button>}
         </div>
+
+        {/* Generation Status */}
+        {genState !== "idle" && genState !== "done" && (
+          <div style={{ padding: "12px 16px", borderRadius: 10, border: "1px solid #E8DCC8", background: genState === "error" ? "#E91E6308" : "#4CAF5008", marginBottom: 16 }}>
+            {genState === "error" ? (
+              <div>
+                <div style={{ fontSize: 12.5, color: "#E91E63", fontWeight: 600, marginBottom: 4 }}>Generation failed</div>
+                <div style={{ fontSize: 11, color: "#707060" }}>{genError}</div>
+              </div>
+            ) : (
+              <div style={{ fontSize: 12.5, color: "#707060" }}>{genMessage}</div>
+            )}
+          </div>
+        )}
+
+        {/* Generated Image */}
+        {genImage && (
+          <div style={{ border: "1px solid #4CAF5030", borderRadius: 12, overflow: "hidden", background: "#FAFAFA", marginBottom: 16 }}>
+            <div style={{ padding: "12px 18px", background: "#4CAF5010", borderBottom: "1px solid #4CAF5020", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <span style={{ fontSize: 13, fontWeight: 600, color: "#4CAF50" }}>Generated Image</span>
+                <span style={{ fontSize: 11, color: "#707060", marginLeft: 10 }}>Review against consistency checklist before use</span>
+              </div>
+              <button onClick={doDownload} style={{ padding: "5px 14px", fontSize: 12, fontWeight: 500, fontFamily: "'DM Sans', sans-serif", background: "#0A5858", color: "#FAF5EF", border: "none", borderRadius: 5, cursor: "pointer" }}>Download</button>
+            </div>
+            <div style={{ padding: 18, display: "flex", justifyContent: "center", background: "#FAF5EF" }}>
+              <img src={genImage} alt="Generated RIGGG asset" style={{ maxWidth: "100%", maxHeight: 600, borderRadius: 8, boxShadow: "0 4px 20px rgba(0,0,0,0.1)" }} />
+            </div>
+          </div>
+        )}
 
         {/* Output */}
         {built && prompt && (
