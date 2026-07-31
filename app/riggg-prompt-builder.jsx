@@ -368,7 +368,7 @@ export default function RigggPromptBuilder() {
         "Authorization": "Bearer " + apiKey.trim()
       },
       body: JSON.stringify({
-        model: "gpt-image-1",
+        model: "gpt-image-2",
         prompt: prompt,
         n: 1,
         size: "1536x1024",
