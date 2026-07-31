@@ -360,32 +360,48 @@ export default function RigggPromptBuilder() {
     var selectedType = TYPES.find(function(t) { return t.id === assetType; });
     var outputSize = selectedType ? selectedType.size : "1536x864";
 
-    // Build GitHub raw URLs for reference images
-    var refPaths = [];
+    // Map filenames to their actual repo paths deterministically
+    // Machine images live in machines/{id}/canonical/
+    // Character images live in characters/{id}/canonical/
+    // Environment images live in environments/{dir}/canonical/
+    var knownPaths = {};
     activeMachines.forEach(function(m) {
-      if (machs.indexOf(m.id) !== -1) {
-        m.refs.forEach(function(filename) {
-          // Determine the path based on filename pattern
-          if (filename.indexOf("factory-") === 0) refPaths.push("environments/" + filename.replace(/-\d+\.png/, "") + "/canonical/" + filename);
-          else {
-            // Check machines and characters
-            activeMachines.forEach(function(mm) { if (mm.refs.indexOf(filename) !== -1) refPaths.push("machines/" + mm.id + "/canonical/" + filename); });
-            activeChars.forEach(function(cc) { if (cc.refs.indexOf(filename) !== -1) refPaths.push("characters/" + cc.id + "/canonical/" + filename); });
-          }
-        });
-      }
+      m.refs.forEach(function(f) {
+        if (f.indexOf("factory-exterior") === 0) knownPaths[f] = "environments/factory-exterior/canonical/" + f;
+        else if (f.indexOf("factory-interior") === 0) knownPaths[f] = "environments/factory-interior/canonical/" + f;
+        else if (f.indexOf("capture-rig") === 0) knownPaths[f] = "machines/produce/canonical/" + f;
+        else if (f.indexOf("assembly-press") === 0) knownPaths[f] = "machines/package/canonical/" + f;
+        else if (f.indexOf("distribution-engine") === 0) knownPaths[f] = "machines/publish/canonical/" + f;
+        else if (f.indexOf("insight-scope") === 0) knownPaths[f] = "machines/prove/canonical/" + f;
+        else if (f.indexOf("memory-vault") === 0) knownPaths[f] = "machines/preserve/canonical/" + f;
+        else if (f.indexOf("spark") === 0) knownPaths[f] = "characters/produce-gnome/canonical/" + f;
+        else if (f.indexOf("crafter") === 0) knownPaths[f] = "characters/package-gnome/canonical/" + f;
+        else if (f.indexOf("router") === 0) knownPaths[f] = "characters/publish-gnome/canonical/" + f;
+        else if (f.indexOf("lens") === 0) knownPaths[f] = "characters/prove-gnome/canonical/" + f;
+        else if (f.indexOf("keeper") === 0) knownPaths[f] = "characters/preserve-gnome/canonical/" + f;
+      });
     });
     activeChars.forEach(function(c) {
-      if (chars.indexOf(c.id) !== -1) {
-        c.refs.forEach(function(filename) {
-          refPaths.push("characters/" + c.id + "/canonical/" + filename);
-        });
-      }
+      c.refs.forEach(function(f) {
+        if (!knownPaths[f]) {
+          if (f.indexOf("spark") === 0) knownPaths[f] = "characters/produce-gnome/canonical/" + f;
+          else if (f.indexOf("crafter") === 0) knownPaths[f] = "characters/package-gnome/canonical/" + f;
+          else if (f.indexOf("router") === 0) knownPaths[f] = "characters/publish-gnome/canonical/" + f;
+          else if (f.indexOf("lens") === 0) knownPaths[f] = "characters/prove-gnome/canonical/" + f;
+          else if (f.indexOf("keeper") === 0) knownPaths[f] = "characters/preserve-gnome/canonical/" + f;
+        }
+      });
     });
-    // Deduplicate
-    refPaths = refPaths.filter(function(v, i, a) { return a.indexOf(v) === i; });
-    // Limit to 3 most relevant references
-    refPaths = refPaths.slice(0, 3);
+
+    // Collect unique filenames from selected objects
+    var refFiles = [];
+    machs.forEach(function(id) { var m = activeMachines.find(function(x) { return x.id === id; }); if (m) m.refs.forEach(function(f) { if (refFiles.indexOf(f) === -1) refFiles.push(f); }); });
+    chars.forEach(function(id) { var c = activeChars.find(function(x) { return x.id === id; }); if (c) c.refs.forEach(function(f) { if (refFiles.indexOf(f) === -1) refFiles.push(f); }); });
+    envs.forEach(function(id) { var e = activeEnvs.find(function(x) { return x.id === id; }); if (e) e.refs.forEach(function(f) { if (refFiles.indexOf(f) === -1) refFiles.push(f); }); });
+
+    // Resolve to full paths, limit to 3
+    var refPaths = refFiles.map(function(f) { return knownPaths[f]; }).filter(Boolean);
+    refPaths = refPaths.filter(function(v, i, a) { return a.indexOf(v) === i; }).slice(0, 3);
 
     var refUrls = refPaths.map(function(p) {
       return "https://raw.githubusercontent.com/" + REPO + "/main/" + p;
