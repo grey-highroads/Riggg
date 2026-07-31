@@ -6,6 +6,13 @@
 **Machine silhouette:** Tall apparatus with a prominent magnifying/measuring mechanism, content cards passing under analysis instruments, and scored output cards emerging in ranked trays.
 **Signature detail:** A large brass magnifying lens or telescope eyepiece with a pink/red glow — the "scope" that gives the machine its name. The most gauge-dense machine in the factory.
 
+
+## Canonical Assets
+
+| Asset | Filename | Path |
+|---|---|---|
+| Machine + gnome (hero) | `insight-scope_prove-red.png` | `machines/prove/canonical/` |
+
 ## Machine-Specific Elements
 
 - Large magnifying lens apparatus with pink/red glow, mounted on adjustable brass arm

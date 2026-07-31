@@ -6,6 +6,13 @@
 **Machine silhouette:** Sturdy, vault-like structure with glass-fronted filing cabinets, card catalog drawers, and a mechanical retrieval arm. The warmest and most furniture-like machine in the factory.
 **Signature detail:** Glass-fronted cabinet with amber glow illuminating organized rows of content cards — a visual library. A brass retrieval crane arm that can locate and present any filed item.
 
+
+## Canonical Assets
+
+| Asset | Filename | Path |
+|---|---|---|
+| Machine + gnome (hero) | `memory-vault_preserve-amber.png` | `machines/preserve/canonical/` |
+
 ## Machine-Specific Elements
 
 - Glass-fronted filing cabinet with warm amber interior glow

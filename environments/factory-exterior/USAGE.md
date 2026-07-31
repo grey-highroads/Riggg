@@ -4,7 +4,7 @@
 
 | Asset | Filename | Dimensions | Use For |
 |---|---|---|---|
-| Full factory hero | `canonical/factory-exterior-hero.png` | [TBD] | Homepage hero, about page, social banners |
+| Full factory hero | `canonical/factory-exterior-1.png` | [TBD] | Homepage hero, about page, social banners |
 
 ## Composition Rules
 

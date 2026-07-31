@@ -6,6 +6,13 @@
 **Distinguishing features:** Manifest clipboard in hand or holster, routing stamps in belt pockets, slightly windswept beard from constant movement
 **Signature props:** Manifest clipboard, channel routing stamps, dispatch labels
 
+
+## Canonical Assets
+
+| Asset | Filename | Path |
+|---|---|---|
+| Hero pose (full body) | `router_publish-blue.png` | `characters/publish-gnome/canonical/` |
+
 ## Pose Library
 
 **Default standing pose:** Slight 3/4 turn, manifest clipboard in left hand, right hand mid-gesture directing a content card, body angled slightly forward suggesting motion. The most kinetic-looking gnome.

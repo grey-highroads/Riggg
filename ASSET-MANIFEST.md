@@ -1,79 +1,73 @@
 # Asset Manifest
 
-Complete inventory of canonical images in the brand system. Every image referenced in a USAGE.md or the prompt builder must exist at the path listed here.
+Complete inventory of canonical images in the RIGGG brand system.
 
-## Status Key
-- ✅ In repo
-- 📎 Available (not yet in repo)
-- ⬜ Needs generation
+## Naming Convention
+
+```
+Characters:    {name}_{feature}-{color}.png     → spark_produce-green.png
+Machines:      {machine}_{feature}-{color}.png   → capture-rig_produce-green.png
+Environments:  {type}-{number}.png               → factory-exterior-1.png
+```
+
+Variants when needed: append `-{variant}` before `.png` (e.g., `spark_produce-green-portrait.png`)
 
 ---
 
-## Environments
+## Characters (5/5 complete)
 
-| Asset | Path | Status | Notes |
+| Gnome | Feature | File | Path |
 |---|---|---|---|
-| Factory exterior hero | `environments/factory-exterior/canonical/factory-exterior-hero.png` | ✅ | Primary establishing shot. 5 jars on conveyor. |
-| Factory interior hero | `environments/factory-interior/canonical/factory-interior-hero.png` | 📎 | Client has this. Needs to be added. |
+| Spark | Produce | `spark_produce-green.png` | `characters/produce-gnome/canonical/` |
+| Crafter | Package | `crafter_package-purple.png` | `characters/package-gnome/canonical/` |
+| Router | Publish | `router_publish-blue.png` | `characters/publish-gnome/canonical/` |
+| Lens | Prove | `lens_prove-red.png` | `characters/prove-gnome/canonical/` |
+| Keeper | Preserve | `keeper_preserve-amber.png` | `characters/preserve-gnome/canonical/` |
 
-## Machines (1 per feature — gnome at workstation)
+## Machines (5/5 complete)
 
-| Asset | Path | Status | Notes |
+| Machine | Feature | File | Path |
 |---|---|---|---|
-| Produce: Capture Rig | `machines/produce/canonical/capture-rig-hero.png` | ⬜ | Needs generation. Microphone, green glow, waveform. |
-| Package: Assembly Press | `machines/package/canonical/assembly-press-hero.png` | ⬜ | Needs generation. Multi-stage, purple glow, varied outputs. |
-| Publish: Distribution Engine | `machines/publish/canonical/distribution-engine-hero.png` | ✅ | Gnome at sorting workstation with blue glow. |
-| Prove: Insight Scope | `machines/prove/canonical/insight-scope-hero.png` | ⬜ | Needs generation. Magnifying lens, pink glow, gauges. |
-| Preserve: Memory Vault | `machines/preserve/canonical/memory-vault-hero.png` | ⬜ | Needs generation. Filing cabinet, amber glow, ledger. |
+| The Capture Rig | Produce | `capture-rig_produce-green.png` | `machines/produce/canonical/` |
+| The Assembly Press | Package | `assembly-press_package-purple.png` | `machines/package/canonical/` |
+| The Distribution Engine | Publish | `distribution-engine_publish-blue.png` | `machines/publish/canonical/` |
+| The Insight Scope | Prove | `insight-scope_prove-red.png` | `machines/prove/canonical/` |
+| The Memory Vault | Preserve | `memory-vault_preserve-amber.png` | `machines/preserve/canonical/` |
 
-## Characters (standalone hero poses)
+## Environments (2/2 complete)
 
-| Asset | Path | Status | Notes |
-|---|---|---|---|
-| Spark (Produce) | `characters/produce-gnome/canonical/spark-hero.png` | ✅ | Teal hat, wrench, notebook. General mechanic pose. |
-| Crafter (Package) | `characters/package-gnome/canonical/crafter-hero.png` | ⬜ | Purple band hat, ink roller, shears. |
-| Router (Publish) | `characters/publish-gnome/canonical/router-hero.png` | ⬜ | Blue hat, clipboard, routing stamps. |
-| Lens (Prove) | `characters/prove-gnome/canonical/lens-hero.png` | ⬜ | Pink band hat, spectacles, magnifying glass. |
-| Keeper (Preserve) | `characters/preserve-gnome/canonical/keeper-hero.png` | ⬜ | Amber band hat, ledger, key ring. |
-
-## Shared Reference Images
-
-These are used as style references when generating new assets. They establish the visual language.
-
-| Asset | Path | Role |
+| Scene | File | Path |
 |---|---|---|
-| Factory exterior | `environments/factory-exterior/canonical/factory-exterior-hero.png` | Architecture, color, lighting, material reference |
-| Gnome character | `characters/produce-gnome/canonical/spark-hero.png` | Character proportions, uniform, expression reference |
-| Gnome at workstation | `machines/publish/canonical/distribution-engine-hero.png` | Machine scale, composition, gnome-machine interaction reference |
-| Factory interior | `environments/factory-interior/canonical/factory-interior-hero.png` | Interior lighting, environment details reference |
+| Factory Exterior | `factory-exterior-1.png` | `environments/factory-exterior/canonical/` |
+| Factory Interior | `factory-interior-1.png` | `environments/factory-interior/canonical/` |
 
 ---
 
-## Generation Priority
+## Style Reference Sets
 
-For prompt builder to be fully functional, generate in this order:
+When generating new assets, attach these canonical images as style references:
 
-1. **Remaining 4 machine scenes** (Produce, Package, Prove, Preserve) — these are the core feature illustrations
-2. **Remaining 4 character hero poses** (Crafter, Router, Lens, Keeper) — standalone characters for avatars and cards
-3. **Machine detail crops** (optional) — tight crops of glass chambers for icon derivation
+**For any machine scene:**
+- `environments/factory-exterior/canonical/factory-exterior-1.png` (architecture, materials, lighting)
+- The specific machine's canonical image (composition, glow color)
+- The assigned gnome's canonical image (character proportions, uniform)
 
-Each generation should:
-- Attach the 3 existing canonical images as style references
-- Use the prompt fragments from the machine/character USAGE.md files
-- Validate against `foundation/world-rules/CONSISTENCY.md`
+**For any character pose:**
+- `characters/produce-gnome/canonical/spark_produce-green.png` (base proportions reference)
+- The specific character's canonical image (distinguishing features)
+
+**For environment scenes:**
+- `environments/factory-exterior/canonical/factory-exterior-1.png`
+- `environments/factory-interior/canonical/factory-interior-1.png`
 
 ---
 
-## File Naming Convention
+## Future Asset Needs
 
-```
-[entity-type]/[entity-name]/canonical/[descriptive-name]-[variant].png
-```
-
-Examples:
-- `machines/produce/canonical/capture-rig-hero.png`
-- `characters/produce-gnome/canonical/spark-hero.png`
-- `characters/produce-gnome/canonical/spark-at-work.png`
-- `environments/factory-exterior/canonical/factory-exterior-hero.png`
-
-Variants: `hero` (primary), `at-work` (at machine), `portrait` (head/shoulders), `detail` (close-up)
+| Type | Description | Priority |
+|---|---|---|
+| Character portraits | Head/shoulders crops for avatars and small UI | Medium |
+| Machine details | Tight crops of glass chambers for icons | Medium |
+| Props isolated | Individual tools/props on cream bg for spot illustrations | Low |
+| Group scenes | Multiple gnomes working together | Low |
+| Seasonal variants | Holiday or campaign-specific gnome outfits | Low |

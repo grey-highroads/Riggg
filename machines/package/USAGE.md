@@ -6,6 +6,13 @@
 **Machine silhouette:** Wide horizontal machine with multiple processing stations — a stamping press, a cutting mechanism, a folding station — all feeding into sorted output bins. The widest and most complex machine in the factory.
 **Signature detail:** Multiple distinct output types visible simultaneously — film reel spools, titled cards, framed thumbnail prints, bundled guest kits — showing the variety of assets produced from a single input.
 
+
+## Canonical Assets
+
+| Asset | Filename | Path |
+|---|---|---|
+| Machine + gnome (hero) | `assembly-press_package-purple.png` | `machines/package/canonical/` |
+
 ## Machine-Specific Elements
 
 - Multi-stage processing stations visible (stamp, cut, fold, finish)

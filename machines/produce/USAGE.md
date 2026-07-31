@@ -6,6 +6,13 @@
 **Machine silhouette:** Upright apparatus with prominent microphone/camera inputs on top, a central glass capture chamber with green glow, mixing controls in the middle, and output trays with source file cards at the base.
 **Signature detail:** A large studio microphone arm extending from the top of the machine, with a visible waveform pattern inside the glass chamber — representing live audio/video being captured.
 
+
+## Canonical Assets
+
+| Asset | Filename | Path |
+|---|---|---|
+| Machine + gnome (hero) | `capture-rig_produce-green.png` | `machines/produce/canonical/` |
+
 ## Composition Rules
 
 **Standard layout:**

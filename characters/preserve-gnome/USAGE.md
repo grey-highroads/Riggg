@@ -6,6 +6,13 @@
 **Distinguishing features:** Reading spectacles (often pushed up onto forehead), leather-bound ledger in belt holster, brass key ring on belt, gloves worn soft from years of careful handling
 **Signature props:** Leather-bound ledger, filing keys, catalog cards
 
+
+## Canonical Assets
+
+| Asset | Filename | Path |
+|---|---|---|
+| Hero pose (full body) | `keeper_preserve-amber.png` | `characters/preserve-gnome/canonical/` |
+
 ## Pose Library
 
 **Default standing pose:** Slight 3/4 turn, leather-bound ledger held open in left hand, right hand resting on a brass key ring, spectacles pushed up on forehead, calm protective posture. The most grounded and settled-looking gnome.

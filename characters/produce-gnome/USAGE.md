@@ -6,6 +6,13 @@
 **Distinguishing features:** Monitoring headphones around neck, audio level meter clipped to belt
 **Signature props:** Wrench and cable tester, XLR-style cable connector
 
+
+## Canonical Assets
+
+| Asset | Filename | Path |
+|---|---|---|
+| Hero pose (full body) | `spark_produce-green.png` | `characters/produce-gnome/canonical/` |
+
 ## Pose Library
 
 **Default standing pose:** Slight 3/4 turn, headphones around neck, one hand resting on a cable tester, weight on back foot. Ready posture — about to start a session.

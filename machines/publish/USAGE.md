@@ -6,6 +6,13 @@
 **Machine silhouette:** Central intake chamber with blue glow, fanning out into 5-7 labeled output chutes/channels, each with a small indicator light. Emphasizes the one-to-many routing action.
 **Signature detail:** Labeled channel destination slots — small brass plates reading channel indicators (no readable text, but impression of labeled destinations). Each chute has its own small indicator light.
 
+
+## Canonical Assets
+
+| Asset | Filename | Path |
+|---|---|---|
+| Machine + gnome (hero) | `distribution-engine_publish-blue.png` | `machines/publish/canonical/` |
+
 ## Machine-Specific Elements
 
 - Central sorting mechanism with brass routing arms

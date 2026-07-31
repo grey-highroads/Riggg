@@ -6,6 +6,13 @@
 **Distinguishing features:** Small brass spectacles (either on nose or pushed up on forehead), brass magnifying glass in leather belt holster, measurement calipers in chest pocket
 **Signature props:** Brass magnifying glass, scored report cards, rolled chart scrolls
 
+
+## Canonical Assets
+
+| Asset | Filename | Path |
+|---|---|---|
+| Hero pose (full body) | `lens_prove-red.png` | `characters/prove-gnome/canonical/` |
+
 ## Pose Library
 
 **Default standing pose:** Slight 3/4 turn, brass magnifying glass held at mid-level, spectacles on nose, examining a scored report card with analytical interest. Posture of thoughtful observation.

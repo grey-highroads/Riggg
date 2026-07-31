@@ -6,6 +6,13 @@
 **Distinguishing features:** Ink roller in chest pocket, small precision cutting tool in belt, ink-stained glove fingertips
 **Signature props:** Brass stamp pad, cutting shears, title cards
 
+
+## Canonical Assets
+
+| Asset | Filename | Path |
+|---|---|---|
+| Hero pose (full body) | `crafter_package-purple.png` | `characters/package-gnome/canonical/` |
+
 ## Pose Library
 
 **Default standing pose:** Slight 3/4 turn, holding a freshly stamped title card in one hand, cutting shears in belt, surrounded by various output types. Posture of productive satisfaction.
