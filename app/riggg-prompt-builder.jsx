@@ -340,65 +340,25 @@ export default function RigggPromptBuilder() {
       return;
     }
 
-    setGenState("fetching-refs");
-    setGenMessage("Fetching reference images from repo...");
+    setGenState("generating");
+    setGenMessage("Sending to renderer — this usually takes 30-60 seconds...");
     setGenImage(null);
     setGenError("");
 
-    // Build raw GitHub URLs for reference images
-    var refUrls = refs.map(function(filename) {
-      // Find the full path in the repo for this filename
-      var paths = [];
-      activeMachines.forEach(function(m) { if (m.refs.indexOf(filename) !== -1) paths.push("machines/" + m.id + "/canonical/" + filename); });
-      activeChars.forEach(function(c) { if (c.refs.indexOf(filename) !== -1) paths.push("characters/" + c.id + "/canonical/" + filename); });
-      activeEnvs.forEach(function(e) { if (e.refs.indexOf(filename) !== -1) paths.push("environments/" + e.id + "/canonical/" + filename); });
-      return paths[0] ? "https://raw.githubusercontent.com/" + REPO + "/main/" + paths[0] : null;
-    }).filter(Boolean);
-
-    // Fetch reference images as base64
-    Promise.all(refUrls.map(function(url) {
-      return fetch(url)
-        .then(function(r) { return r.blob(); })
-        .then(function(blob) {
-          return new Promise(function(resolve) {
-            var reader = new FileReader();
-            reader.onload = function() { resolve(reader.result); };
-            reader.readAsDataURL(blob);
-          });
-        });
-    })).then(function(base64Images) {
-      setGenState("generating");
-      setGenMessage("Sending to renderer — this takes 30-60 seconds...");
-
-      // Build the messages array with reference images + prompt
-      var content = [];
-
-      // Add reference images
-      base64Images.forEach(function(dataUrl, i) {
-        content.push({
-          type: "image_url",
-          image_url: { url: dataUrl, detail: "high" }
-        });
-      });
-
-      // Add the generation instruction
-      content.push({
-        type: "text",
-        text: "Using the attached images as strict style references for materials, lighting, color palette, rendering quality, and character proportions, generate a new image following this specification exactly:\n\n" + prompt
-      });
-
-      return fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer " + apiKey.trim()
-        },
-        body: JSON.stringify({
-          model: "gpt-4o",
-          messages: [{ role: "user", content: content }],
-          max_tokens: 1000
-        })
-      });
+    // Use OpenAI's dedicated image generation API
+    fetch("https://api.openai.com/v1/images/generations", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + apiKey.trim()
+      },
+      body: JSON.stringify({
+        model: "gpt-image-1",
+        prompt: prompt,
+        n: 1,
+        size: "1536x1024",
+        quality: "high"
+      })
     }).then(function(response) {
       if (!response.ok) {
         return response.json().then(function(err) {
@@ -407,57 +367,21 @@ export default function RigggPromptBuilder() {
       }
       return response.json();
     }).then(function(data) {
-      // Extract image from response
-      var imageContent = null;
-      if (data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content) {
-        var msgContent = data.choices[0].message.content;
-        // Check if content is an array (multimodal response)
-        if (Array.isArray(msgContent)) {
-          msgContent.forEach(function(part) {
-            if (part.type === "image_url" || part.type === "image") {
-              imageContent = part.image_url ? part.image_url.url : (part.source ? "data:image/png;base64," + part.source.data : null);
-            }
-          });
+      if (data.data && data.data[0]) {
+        var img = data.data[0];
+        if (img.b64_json) {
+          setGenImage("data:image/png;base64," + img.b64_json);
+          setGenState("done");
+        } else if (img.url) {
+          setGenImage(img.url);
+          setGenState("done");
+        } else {
+          setGenState("error");
+          setGenError("Unexpected response format from API.");
         }
-        // Check for image in output_image format
-        if (!imageContent && data.choices[0].message.content) {
-          // GPT-4o returns images inline - check for base64
-          var textContent = typeof msgContent === "string" ? msgContent : "";
-          if (textContent.indexOf("data:image") !== -1) {
-            var imgMatch = textContent.match(/(data:image\/[^;]+;base64,[^\s"]+)/);
-            if (imgMatch) imageContent = imgMatch[1];
-          }
-        }
-      }
-
-      // Also check for the newer image generation response format
-      if (!imageContent && data.choices && data.choices[0] && data.choices[0].message) {
-        var msg = data.choices[0].message;
-        // Check for images in content array
-        if (Array.isArray(msg.content)) {
-          for (var ci = 0; ci < msg.content.length; ci++) {
-            var block = msg.content[ci];
-            if (block.type === "image" && block.source) {
-              imageContent = "data:" + (block.source.media_type || "image/png") + ";base64," + block.source.data;
-              break;
-            }
-          }
-        }
-      }
-
-      if (imageContent) {
-        setGenImage(imageContent);
-        setGenState("done");
-        setGenMessage("");
       } else {
-        // The model may have responded with text instead of an image
-        var responseText = "";
-        if (data.choices && data.choices[0] && data.choices[0].message) {
-          var rc = data.choices[0].message.content;
-          responseText = typeof rc === "string" ? rc : JSON.stringify(rc);
-        }
         setGenState("error");
-        setGenError("Model returned text instead of an image. You may need to use the DALL-E API or try again. Response: " + responseText.substring(0, 200));
+        setGenError("No image returned from API.");
       }
     }).catch(function(err) {
       console.error("Generation failed:", err);
