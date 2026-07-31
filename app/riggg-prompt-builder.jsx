@@ -267,6 +267,7 @@ export default function RigggPromptBuilder() {
   const [copied, setCopied] = useState(false);
   const [apiKey, setApiKey] = useState("");
   const [showKeyInput, setShowKeyInput] = useState(false);
+  const [useRefs, setUseRefs] = useState(true);
   const [genState, setGenState] = useState("idle"); // idle | fetching-refs | generating | done | error
   const [genMessage, setGenMessage] = useState("");
   const [genImage, setGenImage] = useState(null); // base64 data URL
@@ -390,10 +391,10 @@ export default function RigggPromptBuilder() {
       return "https://raw.githubusercontent.com/" + REPO + "/main/" + p;
     });
 
-    if (refUrls.length === 0) {
-      // No references — fall back to text-only generation
+    if (refUrls.length === 0 || !useRefs) {
+      // Text-only generation via /v1/images/generations (the proven A-quality path)
       setGenState("generating");
-      setGenMessage("Generating (text-only, no references) — 30-60 seconds...");
+      setGenMessage("Generating (text-only" + (useRefs ? ", no refs found" : "") + ") — 30-60 seconds...");
       setGenImage(null);
       setGenError("");
 
@@ -673,6 +674,14 @@ export default function RigggPromptBuilder() {
               <div style={{ fontSize: 11, color: "#B0A898", marginTop: 4 }}>Stored in memory only — never saved or transmitted except to OpenAI's API.</div>
             </div>
           )}
+          <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 8 }}>
+            <div onClick={function() { setUseRefs(!useRefs); }} style={{ width: 36, height: 20, borderRadius: 10, background: useRefs ? "#4CAF50" : "#B0A898", cursor: "pointer", position: "relative", transition: "background 0.15s" }}>
+              <div style={{ width: 16, height: 16, borderRadius: "50%", background: "#fff", position: "absolute", top: 2, left: useRefs ? 18 : 2, transition: "left 0.15s", boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }} />
+            </div>
+            <span style={{ fontSize: 12.5, color: "#707060" }}>
+              {useRefs ? "Reference images ON — uses edits endpoint with canonical assets as style refs" : "Reference images OFF — text-only generation (proven A-quality path)"}
+            </span>
+          </div>
         </div>
 
         {/* Compile */}
