@@ -14,7 +14,15 @@ Warm key light from upper-left creating defined shadows with soft edges, cool fi
 
 High surface detail density: functional mechanical details (pressure gauges with readable dials, pipe fittings with threaded connections, riveted joins with shadow relief, valve handles, small bolts). These should look like they serve a purpose, not decorative rectangles stamped on surfaces. Small organic details for warmth: potted succulents with individual leaf geometry, stacked papers with visible edges, wooden elements with grain.
 
-Rounded edges on all surfaces — nothing sharp. Clean overall composition with generous negative space despite dense object detail.`;
+Rounded edges on all surfaces — nothing sharp. Clean overall composition with generous negative space despite dense object detail.
+
+CHARACTER LIFE — gnomes must feel like they were caught mid-moment, not posed for a photo:
+- Asymmetric posture: weight shifted to one foot, one shoulder slightly higher, head tilted toward their work. No stiff T-poses or symmetrical standing.
+- Eyes tell a story: looking at what they're doing, or glancing at their work with pride, curiosity, or focus. Eye direction implies thought. A slight squint, a raised eyebrow, a knowing look — the eyes should make you wonder what they're thinking.
+- Hands doing something specific: gripping a tool mid-use, steadying a piece on the conveyor, adjusting a dial, inspecting output. Hands reveal character.
+- Micro-expressions: a slight smirk of satisfaction, the focused purse of lips mid-task, the soft smile of someone who loves their craft. Not a neutral default face.
+- Clothing responds to the body: belt pulled slightly by the weight of tools, fabric bunching at the elbows, hat sitting at a natural angle rather than perfectly centered.
+- Each gnome has their own energy: some are quick and kinetic, some are steady and deliberate. Their body language should reflect their personality, not a generic "standing gnome" template.`;
 
 const NEG = `Do not include: chrome or silver metal, neon lights, digital screens, holographic displays, circuit board patterns, dark or moody lighting, sky or horizon, environmental backgrounds, floor tiles or wall textures, sharp edges, low-poly geometry, flat shading, cartoon outlines, text or words rendered in the image. Do not render in a clay, plasticine, or mobile-game style. Do not use uniform matte finish across all materials — each material must have distinct surface properties. Do not use decorative stamped shapes in place of functional mechanical detail.`;
 
