@@ -67,8 +67,181 @@ function getRefs(machs, chars, envs) {
   return Array.from(r);
 }
 
+// ─── GitHub Fetch ──────────────────────────────────────────────────
+var REPO = "grey-highroads/Riggg";
+var RAW = function(path) { return "https://raw.githubusercontent.com/" + REPO + "/main/" + path; };
+
+function parseSections(md) {
+  var s = {};
+  var key = null;
+  md.split("\n").forEach(function(line) {
+    var h = line.match(/^#{2,3}\s+(.+)/);
+    if (h) { key = h[1].trim(); s[key] = ""; }
+    else if (key != null) { s[key] += line + "\n"; }
+  });
+  for (var k in s) { s[k] = s[k].trim(); }
+  return s;
+}
+
+function getField(sections, section, label) {
+  var block = sections[section] || "";
+  var re = new RegExp("\\*\\*" + label + ":\\*\\*\\s*(.+)", "i");
+  var m = block.match(re);
+  return m ? m[1].replace(/`/g, "").trim() : "";
+}
+
+function getCodeBlock(text) {
+  var m = text.match(/```[\w]*\n([\s\S]*?)```/);
+  return m ? m[1].trim() : "";
+}
+
+function getTitle(md) {
+  var m = md.match(/^#\s+(.+?)(?:\s*—.*)?$/m);
+  return m ? m[1].trim() : "";
+}
+
+function getImageRefs(text) {
+  var refs = [];
+  var matches = text.match(/`([^`]*\.png)`/g);
+  if (matches) { matches.forEach(function(m) { refs.push(m.replace(/`/g, "")); }); }
+  return refs;
+}
+
+var PCOLORS = { produce: ["#4CAF50", "Green"], package: ["#9C27B0", "Purple"], publish: ["#2196F3", "Blue"], prove: ["#E91E63", "Pink"], preserve: ["#FF9800", "Amber"] };
+
+async function syncFromRepo() {
+  var treeResp = await fetch("https://api.github.com/repos/" + REPO + "/git/trees/main?recursive=1");
+  if (!treeResp.ok) throw new Error("GitHub API: " + treeResp.status);
+  var treeData = await treeResp.json();
+  var allPaths = treeData.tree.filter(function(t) { return t.type === "blob"; }).map(function(t) { return t.path; });
+
+  var machDirs = [];
+  var charDirs = [];
+  var envDirs = [];
+  allPaths.forEach(function(p) {
+    var machMatch = p.match(/^machines\/([^_][^/]+)\/CONTEXT\.md$/);
+    if (machMatch && machDirs.indexOf(machMatch[1]) === -1) machDirs.push(machMatch[1]);
+    var charMatch = p.match(/^characters\/([^_][^/]+)\/CONTEXT\.md$/);
+    if (charMatch && charDirs.indexOf(charMatch[1]) === -1) charDirs.push(charMatch[1]);
+    var envMatch = p.match(/^environments\/([^/]+)\/CONTEXT\.md$/);
+    if (envMatch && envDirs.indexOf(envMatch[1]) === -1) envDirs.push(envMatch[1]);
+  });
+
+  // Fetch style anchor
+  var styleAnchor = "";
+  var negPrompt = "";
+  try {
+    var saResp = await fetch(RAW("prompts/base/style-anchor.md"));
+    var saText = await saResp.text();
+    var saSec = parseSections(saText);
+    styleAnchor = getCodeBlock(saSec["Core Style Fragment"] || "") || getCodeBlock(saText);
+    negPrompt = getCodeBlock(saSec["Negative Prompt Fragment"] || "");
+  } catch(e) { /* use fallback */ }
+
+  // Fetch machines
+  var machines = [];
+  for (var i = 0; i < machDirs.length; i++) {
+    var dir = machDirs[i];
+    try {
+      var ctxResp = await fetch(RAW("machines/" + dir + "/CONTEXT.md"));
+      var useResp = await fetch(RAW("machines/" + dir + "/USAGE.md"));
+      var ctxText = await ctxResp.text();
+      var useText = await useResp.text();
+      var ctx = parseSections(ctxText);
+      var use = parseSections(useText);
+
+      var pName = getField(ctx, "Feature Identity", "RIGGG feature") || dir;
+      var gnomeId = getField(ctx, "Feature Identity", "Assigned gnome").toLowerCase();
+      var emotion = (ctx["Emotional Register"] || "").split("\n").filter(function(l) { return l.trim() && l.indexOf("**") === 0; })[0] || "";
+      emotion = emotion.replace(/^\*\*[^*]+\*\*\s*/, "").trim();
+      var tagline = getField(ctx, "Business Context", "What this feature does \\(plain language\\)");
+      var quality = getField(ctx, "Business Context", "Quality question");
+      // Get prompt from Prompt Fragments section code block, or first code block in USAGE
+      var promptText = getCodeBlock(use["Prompt Fragments"] || "") || getCodeBlock(useText);
+      var refs = getImageRefs(use["Canonical Assets"] || useText);
+      if (refs.length === 0) refs.push("factory-exterior-1.png");
+
+      machines.push({
+        id: dir, p: pName, name: getTitle(ctxText),
+        color: PCOLORS[dir] ? PCOLORS[dir][0] : "#0A5858",
+        colorName: PCOLORS[dir] ? PCOLORS[dir][1] : "Teal",
+        gnome: gnomeId ? charDirs.find(function(d) { return d.indexOf(gnomeId) !== -1; }) || dir + "-gnome" : dir + "-gnome",
+        tagline: tagline, quality: quality, emotion: emotion,
+        prompt: promptText, refs: refs
+      });
+    } catch(e) { console.warn("Machine " + dir + ":", e); }
+  }
+
+  // Fetch characters
+  var characters = [];
+  for (var j = 0; j < charDirs.length; j++) {
+    var cdir = charDirs[j];
+    try {
+      var cCtxResp = await fetch(RAW("characters/" + cdir + "/CONTEXT.md"));
+      var cUseResp = await fetch(RAW("characters/" + cdir + "/USAGE.md"));
+      var cCtxText = await cCtxResp.text();
+      var cUseText = await cUseResp.text();
+      var cCtx = parseSections(cCtxText);
+      var cUse = parseSections(cUseText);
+
+      var cName = getTitle(cCtxText);
+      var cRole = getField(cCtx, "Identity", "Role in the Factory");
+      var cFeature = getField(cCtx, "Identity", "Feature Mapped To").toLowerCase();
+      var cMachineId = machDirs.find(function(d) { return d === cFeature; }) || cdir.replace("-gnome", "");
+      var cSig = getField(cUse, "Visual Identity", "Distinguishing features") || getField(cUse, "Visual Identity", "Signature props") || "";
+      var cPrompt = getCodeBlock(cUse["Prompt Fragments"] || "") || getCodeBlock(cUseText);
+      var cRefs = getImageRefs(cUse["Canonical Assets"] || cUseText);
+      if (cRefs.length === 0) cRefs.push("spark_produce-green.png");
+
+      characters.push({
+        id: cdir, name: cName, title: cRole, machine: cMachineId,
+        signature: cSig, prompt: cPrompt, refs: cRefs
+      });
+    } catch(e) { console.warn("Character " + cdir + ":", e); }
+  }
+
+  // Fetch environments
+  var environments = [];
+  for (var k = 0; k < envDirs.length; k++) {
+    var edir = envDirs[k];
+    try {
+      var eCtxResp = await fetch(RAW("environments/" + edir + "/CONTEXT.md"));
+      var eUseResp = await fetch(RAW("environments/" + edir + "/USAGE.md"));
+      var eCtxText = await eCtxResp.text();
+      var eUseText = await eUseResp.text();
+      var eCtx = parseSections(eCtxText);
+
+      var eName = getTitle(eCtxText);
+      var eDesc = getField(eCtx, "Business Context", "What it represents") || getField(eCtx, "Identity", "Role");
+      var ePrompt = getCodeBlock(eUseText);
+      var eRefs = getImageRefs(eUseText);
+      if (eRefs.length === 0) eRefs.push("factory-exterior-1.png");
+
+      environments.push({ id: edir, name: eName, desc: eDesc, prompt: ePrompt, refs: eRefs });
+    } catch(e) { console.warn("Env " + edir + ":", e); }
+  }
+
+  // Sort machines in pipeline order
+  var order = ["produce", "package", "publish", "prove", "preserve"];
+  machines.sort(function(a, b) { return order.indexOf(a.id) - order.indexOf(b.id); });
+
+  return {
+    machines: machines, characters: characters, environments: environments,
+    styleAnchor: styleAnchor, negPrompt: negPrompt,
+    syncedAt: new Date().toISOString()
+  };
+}
+
 // ─── App ───────────────────────────────────────────────────────────
 export default function RigggPromptBuilder() {
+  const [syncState, setSyncState] = useState("idle");
+  const [syncError, setSyncError] = useState("");
+  const [liveMachines, setLiveMachines] = useState(null);
+  const [liveChars, setLiveChars] = useState(null);
+  const [liveEnvs, setLiveEnvs] = useState(null);
+  const [liveStyle, setLiveStyle] = useState(null);
+  const [liveNeg, setLiveNeg] = useState(null);
+  const [syncTime, setSyncTime] = useState(null);
   const [assetType, setAssetType] = useState("");
   const [machs, setMachs] = useState([]);
   const [chars, setChars] = useState([]);
@@ -77,6 +250,33 @@ export default function RigggPromptBuilder() {
   const [notes, setNotes] = useState("");
   const [built, setBuilt] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  // Use live data if synced, otherwise fallback
+  var activeMachines = liveMachines || MACHINES;
+  var activeChars = liveChars || CHARS;
+  var activeEnvs = liveEnvs || ENVS;
+  var activeStyle = liveStyle || STYLE;
+  var activeNeg = liveNeg || NEG;
+  var isLive = liveMachines !== null;
+
+  function doSync() {
+    setSyncState("syncing");
+    setSyncError("");
+    syncFromRepo().then(function(result) {
+      if (result.machines.length === 0) throw new Error("No machines found in repo");
+      setLiveMachines(result.machines);
+      setLiveChars(result.characters);
+      setLiveEnvs(result.environments);
+      if (result.styleAnchor) setLiveStyle(result.styleAnchor);
+      if (result.negPrompt) setLiveNeg(result.negPrompt);
+      setSyncTime(result.syncedAt);
+      setSyncState("synced");
+    }).catch(function(e) {
+      console.error("Sync failed:", e);
+      setSyncError(e.message || "Could not reach repo");
+      setSyncState("error");
+    });
+  }
 
   function toggleList(list, setList, id) {
     if (list.includes(id)) {
@@ -88,14 +288,38 @@ export default function RigggPromptBuilder() {
 
   var suggested = [];
   machs.forEach(function(id) {
-    var m = MACHINES.find(function(x) { return x.id === id; });
+    var m = activeMachines.find(function(x) { return x.id === id; });
     if (m && m.gnome) suggested.push(m.gnome);
   });
 
   var ready = assetType && (machs.length > 0 || chars.length > 0 || envs.length > 0);
-  var prompt = ready ? compile(assetType, machs, chars, envs, topic, notes) : "";
-  var refs = getRefs(machs, chars, envs);
+  var prompt = ready ? compileActive(assetType, machs, chars, envs, topic, notes) : "";
+  var refs = getRefsActive(machs, chars, envs);
   var wordCount = prompt ? prompt.split(/\s+/).filter(Boolean).length : 0;
+
+  function compileActive(assetType, machs, chars, envs, topic, notes) {
+    var parts = [activeStyle];
+    var t = TYPES.find(function(x) { return x.id === assetType; });
+    if (t) parts.push("\nFORMAT: " + t.label + " (" + t.ratio + ")\nCOMPOSITION: " + t.comp);
+    var eList = activeEnvs.filter(function(x) { return envs.indexOf(x.id) !== -1; });
+    if (eList.length) parts.push("\nSETTING:\n" + eList.map(function(x) { return x.prompt; }).join("\n\n"));
+    var mList = activeMachines.filter(function(x) { return machs.indexOf(x.id) !== -1; });
+    if (mList.length) parts.push("\n" + (mList.length > 1 ? "MACHINES" : "MACHINE") + ":\n" + mList.map(function(x) { return x.prompt; }).join("\n\n"));
+    var cList = activeChars.filter(function(x) { return chars.indexOf(x.id) !== -1; });
+    if (cList.length) parts.push("\n" + (cList.length > 1 ? "CHARACTERS" : "CHARACTER") + ":\n" + cList.map(function(x) { return x.prompt; }).join("\n\n"));
+    if (topic.trim()) parts.push('\nTOPIC CONTEXT: The scene should subtly suggest "' + topic.trim() + '". Use relevant props, output artifacts, or visual details — do NOT render readable text.');
+    if (notes.trim()) parts.push("\nDIRECTION: " + notes.trim());
+    parts.push("\nNEGATIVE: " + activeNeg);
+    return parts.join("\n");
+  }
+
+  function getRefsActive(machs, chars, envs) {
+    var r = new Set();
+    machs.forEach(function(id) { var m = activeMachines.find(function(x) { return x.id === id; }); if (m) m.refs.forEach(function(x) { r.add(x); }); });
+    chars.forEach(function(id) { var c = activeChars.find(function(x) { return x.id === id; }); if (c) c.refs.forEach(function(x) { r.add(x); }); });
+    envs.forEach(function(id) { var e = activeEnvs.find(function(x) { return x.id === id; }); if (e) e.refs.forEach(function(x) { r.add(x); }); });
+    return Array.from(r);
+  }
 
   function doCopy() {
     navigator.clipboard.writeText(prompt).then(function() {
@@ -134,12 +358,34 @@ export default function RigggPromptBuilder() {
           <p style={{ margin: 0, fontSize: 13, color: "#707060", lineHeight: 1.5 }}>Select brand objects, add context, compile a prompt, attach reference images, render.</p>
         </div>
 
-        {/* Sync status */}
+        {/* Sync */}
         <div style={{ padding: "16px 0 0" }}>
-          <div style={{ padding: "12px 16px", borderRadius: 10, border: "1px solid #E8DCC8", background: "#FAFAFA" }}>
-            <div style={{ fontSize: 12.5, color: "#707060" }}>
-              <span style={{ fontWeight: 600, color: "#0A5858" }}>Brand system loaded</span> — 5 machines · 5 characters · 2 environments.
-              <span style={{ color: "#B0A898" }}> Source: <code style={{ fontSize: 11 }}>grey-highroads/Riggg</code></span>
+          <div style={{ display: "flex", alignItems: "stretch", gap: 10 }}>
+            <button onClick={doSync} disabled={syncState === "syncing"} style={{ padding: "14px 22px", fontSize: 14, fontWeight: 600, fontFamily: "'DM Sans', sans-serif", background: syncState === "syncing" ? "#707060" : "#0A5858", color: "#FAF5EF", border: "none", borderRadius: 10, cursor: syncState === "syncing" ? "wait" : "pointer", display: "flex", alignItems: "center", gap: 8, whiteSpace: "nowrap" }}>
+              {syncState === "syncing" ? "Syncing..." : "Sync Brand System"}
+            </button>
+            <div style={{ flex: 1, padding: "10px 16px", borderRadius: 10, border: "1px solid #E8DCC8", background: syncState === "synced" ? "#4CAF5008" : syncState === "error" ? "#E91E6308" : "#FAFAFA", display: "flex", flexDirection: "column", justifyContent: "center" }}>
+              {syncState === "idle" && (
+                <div style={{ fontSize: 12.5, color: "#707060" }}>
+                  <span style={{ fontWeight: 600, color: "#0A5858" }}>Built-in data loaded</span> — {activeMachines.length} machines · {activeChars.length} characters · {activeEnvs.length} environments.
+                  <span style={{ color: "#B0A898" }}> Hit sync to pull live from <code style={{ fontSize: 11 }}>grey-highroads/Riggg</code></span>
+                </div>
+              )}
+              {syncState === "syncing" && (
+                <div style={{ fontSize: 12.5, color: "#707060" }}>Reading brand system from GitHub...</div>
+              )}
+              {syncState === "synced" && (
+                <div>
+                  <div style={{ fontSize: 12.5, color: "#4CAF50", fontWeight: 600, marginBottom: 2 }}>✓ Synced from repo</div>
+                  <div style={{ fontSize: 11, color: "#707060" }}>{activeMachines.length} machines · {activeChars.length} characters · {activeEnvs.length} environments · {new Date(syncTime).toLocaleTimeString()}</div>
+                </div>
+              )}
+              {syncState === "error" && (
+                <div>
+                  <div style={{ fontSize: 12.5, color: "#E91E63", fontWeight: 600, marginBottom: 2 }}>Sync failed — using built-in data</div>
+                  <div style={{ fontSize: 11, color: "#707060" }}>{syncError}</div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -176,7 +422,7 @@ export default function RigggPromptBuilder() {
           </div>
           <p style={{ margin: "0 0 14px 32px", fontSize: 12.5, color: "#707060" }}>Which stage of the pipeline?</p>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(230px, 1fr))", gap: 8 }}>
-            {MACHINES.map(function(m) {
+            {activeMachines.map(function(m) {
               var sel = machs.includes(m.id);
               return (
                 <div key={m.id} onClick={function() { toggleList(machs, setMachs, m.id); }} style={Object.assign({}, cardBase, { border: sel ? "2px solid " + m.color : "2px solid transparent", background: sel ? m.color + "0D" : "#FAFAFA" })}>
@@ -204,9 +450,9 @@ export default function RigggPromptBuilder() {
             {suggested.length > 0 ? "Suggested: " + suggested.map(function(id) { var c = CHARS.find(function(x) { return x.id === id; }); return c ? c.name : id; }).join(", ") : "Which operator? Usually paired with their machine."}
           </p>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(230px, 1fr))", gap: 8 }}>
-            {CHARS.map(function(c) {
+            {activeChars.map(function(c) {
               var sel = chars.includes(c.id);
-              var m = MACHINES.find(function(x) { return x.id === c.machine; });
+              var m = activeMachines.find(function(x) { return x.id === c.machine; });
               var isSugg = suggested.includes(c.id);
               var color = m ? m.color : "#0A5858";
               return (
@@ -233,7 +479,7 @@ export default function RigggPromptBuilder() {
           </div>
           <p style={{ margin: "0 0 14px 32px", fontSize: 12.5, color: "#707060" }}>Optional. Most scenes use the default cream background.</p>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
-            {ENVS.map(function(e) {
+            {activeEnvs.map(function(e) {
               var sel = envs.includes(e.id);
               return (
                 <div key={e.id} onClick={function() { toggleList(envs, setEnvs, e.id); }} style={Object.assign({}, cardBase, { border: sel ? "2px solid #0A5858" : "2px solid transparent", background: sel ? "#0A58580D" : "#FAFAFA" })}>
@@ -282,7 +528,7 @@ export default function RigggPromptBuilder() {
             <div style={{ padding: "12px 18px", background: "#0A58580A", borderBottom: "1px solid #0A585815", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <div>
                 <span style={{ fontSize: 13, fontWeight: 600, color: "#0A5858" }}>Compiled Prompt</span>
-                <span style={{ fontSize: 11, color: "#707060", marginLeft: 10 }}>{wordCount} words</span>
+                <span style={{ fontSize: 11, color: "#707060", marginLeft: 10 }}>{wordCount} words</span>{isLive ? <span style={{ fontSize: 10, color: "#4CAF50", marginLeft: 8, fontWeight: 500 }}>live repo</span> : <span style={{ fontSize: 10, color: "#FF9800", marginLeft: 8 }}>built-in</span>}
               </div>
               <button onClick={doCopy} style={{ padding: "5px 12px", fontSize: 12, fontWeight: 500, fontFamily: "'DM Sans', sans-serif", background: copied ? "#4CAF50" : "#0A5858", color: "#FAF5EF", border: "none", borderRadius: 5, cursor: "pointer", minWidth: 70 }}>{copied ? "Copied ✓" : "Copy"}</button>
             </div>
@@ -307,7 +553,7 @@ export default function RigggPromptBuilder() {
               <div style={{ fontSize: 11, fontWeight: 700, color: "#0A5858", marginBottom: 6 }}>Quality check</div>
               <div style={{ fontSize: 11.5, color: "#707060", lineHeight: 1.6 }}>
                 {machs.map(function(id) {
-                  var m = MACHINES.find(function(x) { return x.id === id; });
+                  var m = activeMachines.find(function(x) { return x.id === id; });
                   if (!m) return null;
                   return (
                     <div key={id} style={{ marginBottom: 4 }}>
@@ -321,7 +567,7 @@ export default function RigggPromptBuilder() {
             <div style={{ padding: "14px 16px", background: "#E91E6306", borderRadius: 10, border: "1px solid #E8DCC8" }}>
               <div style={{ fontSize: 11, fontWeight: 700, color: "#E91E63", marginBottom: 6 }}>Post-render validation</div>
               <div style={{ fontSize: 11.5, color: "#707060", lineHeight: 1.6 }}>
-                Cream bg · teal dominant · bronze hardware · RIGGG logo · glow in glass only · accent: {machs.map(function(id) { var m = MACHINES.find(function(x) { return x.id === id; }); return m ? m.p + ": " + m.colorName : ""; }).join(", ")}
+                Cream bg · teal dominant · bronze hardware · RIGGG logo · glow in glass only · accent: {machs.map(function(id) { var m = activeMachines.find(function(x) { return x.id === id; }); return m ? m.p + ": " + m.colorName : ""; }).join(", ")}
               </div>
             </div>
           </div>
