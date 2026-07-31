@@ -11,7 +11,7 @@
 
 | Asset | Filename | Path |
 |---|---|---|
-| Machine + gnome (hero) | `assembly-press_package-purple.png` | `machines/package/canonical/` |
+| Machine (standalone) | `assembly-press_package-purple.png` | `machines/package/canonical/` |
 
 ## Machine-Specific Elements
 

@@ -45,9 +45,13 @@ Do not include: chrome or silver metal, neon lights, digital screens, holographi
 
 ## Model & Settings Notes
 
-> **FILL IN:** Document the specific AI model, version, and settings used for canonical images here. This is the most important piece of reproducibility documentation in the system.
+**Canonical assets (v1):** Generated via ChatGPT (GPT-4o) with conversational context and iterative refinement. Transparent PNG cutouts.
 
-**Model:** [e.g., ChatGPT / GPT-4o image generation]
-**Style reference images used:** [List which canonical images were used as references]
-**Any specific settings:** [Resolution, aspect ratio, style strength, etc.]
-**Prompt evolution notes:** [How prompts were refined across the 8 canonical images]
+**Prompt builder output (v2+):** Generated via OpenAI Images API.
+- **Model:** `gpt-image-2`
+- **Endpoint:** `/v1/images/edits` (with reference images) or `/v1/images/generations` (text-only fallback)
+- **Quality:** `high`
+- **Dimensions:** Format-dependent (1536x864 for 16:9, 1024x1024 for 1:1, 864x1536 for 9:16, 1024x768 for 4:3, 1536x512 for 3:1)
+- **Background:** Opaque cream (#FAF5EF) — gpt-image-2 does not support transparent output
+- **Reference images:** Up to 3 canonical assets attached via edits endpoint for style anchoring
+- **Prompt refinement history:** Three rounds of A/B testing. Material differentiation and character life sections each provably improved output quality. Model swap from gpt-image-1 to gpt-image-2 was the largest single quality jump.

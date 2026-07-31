@@ -14,25 +14,27 @@ Variants when needed: append `-{variant}` before `.png` (e.g., `spark_produce-gr
 
 ---
 
-## Characters (5/5 complete)
+## Characters (5/5 complete — standalone hero poses, transparent cutouts)
 
-| Gnome | Feature | File | Path |
-|---|---|---|---|
-| Spark | Produce | `spark_produce-green.png` | `characters/produce-gnome/canonical/` |
-| Crafter | Package | `crafter_package-purple.png` | `characters/package-gnome/canonical/` |
-| Router | Publish | `router_publish-blue.png` | `characters/publish-gnome/canonical/` |
-| Lens | Prove | `lens_prove-red.png` | `characters/prove-gnome/canonical/` |
-| Keeper | Preserve | `keeper_preserve-amber.png` | `characters/preserve-gnome/canonical/` |
+| Gnome | Feature | File | Path | Notes |
+|---|---|---|---|---|
+| Spark | Produce | `spark_produce-green.png` | `characters/produce-gnome/canonical/` | Standard uniform. |
+| Crafter | Package | `crafter_package-purple.png` | `characters/package-gnome/canonical/` | Standard uniform, purple accent. |
+| Router | Publish | `router_publish-blue.png` | `characters/publish-gnome/canonical/` | Standard uniform, carrying package. |
+| Lens | Prove | `lens_prove-red.png` | `characters/prove-gnome/canonical/` | **Diverges from standard uniform.** Red/maroon hat and overalls, brown gloves, clipboard + wrench. |
+| Keeper | Preserve | `keeper_preserve-amber.png` | `characters/preserve-gnome/canonical/` | Standard uniform, amber accents, jar + ledger. |
 
-## Machines (5/5 complete)
+## Machines (5/5 complete — machine standalone, no gnome operator)
 
-| Machine | Feature | File | Path |
-|---|---|---|---|
-| The Capture Rig | Produce | `capture-rig_produce-green.png` | `machines/produce/canonical/` |
-| The Assembly Press | Package | `assembly-press_package-purple.png` | `machines/package/canonical/` |
-| The Distribution Engine | Publish | `distribution-engine_publish-blue.png` | `machines/publish/canonical/` |
-| The Insight Scope | Prove | `insight-scope_prove-red.png` | `machines/prove/canonical/` |
-| The Memory Vault | Preserve | `memory-vault_preserve-amber.png` | `machines/preserve/canonical/` |
+| Machine | Feature | File | Path | Notes |
+|---|---|---|---|---|
+| The Capture Rig | Produce | `capture-rig_produce-green.png` | `machines/produce/canonical/` | Transparent cutout. Machine only. |
+| The Assembly Press | Package | `assembly-press_package-purple.png` | `machines/package/canonical/` | Transparent cutout. Machine only. |
+| The Distribution Engine | Publish | `distribution-engine_publish-blue.png` | `machines/publish/canonical/` | Transparent cutout. Machine only. |
+| The Insight Scope | Prove | `insight-scope_prove-red.png` | `machines/prove/canonical/` | Transparent cutout. Machine only. |
+| The Memory Vault | Preserve | `memory-vault_preserve-amber.png` | `machines/preserve/canonical/` | Transparent cutout. Machine only. |
+
+> **Note:** Machine-and-gnome hero compositions (machine + operator in scene) do not yet exist as committed canonical assets. The gpt-image-2 prompt builder can generate these on demand.
 
 ## Environments (2/2 complete)
 

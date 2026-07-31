@@ -4,7 +4,7 @@ Run every new illustration asset through this checklist before approval. Every i
 
 ## Non-Negotiable (hard fail)
 
-- [ ] **Background is cream (#FAF5EF)** — not white, not warm gray, not transparent. Match against canonical assets visually, not just by hex.
+- [ ] **Background handling:** Canonical character and machine assets use **transparent backgrounds** (PNG with alpha) for compositing flexibility. When generating new assets via the prompt builder, use **opaque cream (#FAF5EF)** as gpt-image-2 does not support transparency. For web use, place transparent cutouts on cream (#FAF5EF) backgrounds.
 - [ ] **Camera angle matches** — elevated 3/4 isometric, ~30° above horizontal. No flat front views. No top-down. No dramatic low angles.
 - [ ] **Teal is the dominant hard-surface color** — not blue, not green, not cyan. Compare against teal-700 (#0A5858) in canonical character image.
 - [ ] **Bronze/brass hardware present** — not silver, not chrome, not gunmetal. Warm metallic tones on rivets, buckles, structural elements.

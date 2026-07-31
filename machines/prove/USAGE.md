@@ -11,7 +11,7 @@
 
 | Asset | Filename | Path |
 |---|---|---|
-| Machine + gnome (hero) | `insight-scope_prove-red.png` | `machines/prove/canonical/` |
+| Machine (standalone) | `insight-scope_prove-red.png` | `machines/prove/canonical/` |
 
 ## Machine-Specific Elements
 

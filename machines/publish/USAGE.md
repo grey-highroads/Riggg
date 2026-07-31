@@ -11,7 +11,7 @@
 
 | Asset | Filename | Path |
 |---|---|---|
-| Machine + gnome (hero) | `distribution-engine_publish-blue.png` | `machines/publish/canonical/` |
+| Machine (standalone) | `distribution-engine_publish-blue.png` | `machines/publish/canonical/` |
 
 ## Machine-Specific Elements
 

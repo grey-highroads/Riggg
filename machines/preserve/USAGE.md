@@ -11,7 +11,7 @@
 
 | Asset | Filename | Path |
 |---|---|---|
-| Machine + gnome (hero) | `memory-vault_preserve-amber.png` | `machines/preserve/canonical/` |
+| Machine (standalone) | `memory-vault_preserve-amber.png` | `machines/preserve/canonical/` |
 
 ## Machine-Specific Elements
 

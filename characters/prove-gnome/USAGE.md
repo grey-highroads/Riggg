@@ -1,5 +1,8 @@
 # Lens — Usage Rules
 
+
+> **NOTE:** The canonical render for Lens diverges from the standard gnome uniform. Lens wears a **red/maroon hat and overalls** (matching the Prove accent color) rather than the standard teal-with-accent-band uniform worn by other gnomes. Lens also carries a **clipboard with checkmark markings** and a **wrench**, and has **brown/dark work gloves** rather than teal. This makes Lens the most visually distinct gnome. Future renders should match the canonical image, not the standard uniform template.
+
 ## Visual Identity
 
 **Hat:** Teal pointed hat with red/pink accent band, RIGGG hexagonal logo embroidered on front

@@ -11,7 +11,7 @@
 
 | Asset | Filename | Path |
 |---|---|---|
-| Machine + gnome (hero) | `capture-rig_produce-green.png` | `machines/produce/canonical/` |
+| Machine (standalone) | `capture-rig_produce-green.png` | `machines/produce/canonical/` |
 
 ## Composition Rules
 

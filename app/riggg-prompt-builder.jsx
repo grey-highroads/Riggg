@@ -27,13 +27,13 @@ CHARACTER LIFE — gnomes must feel like they were caught mid-moment, not posed 
 const NEG = `Do not include: chrome or silver metal, neon lights, digital screens, holographic displays, circuit board patterns, dark or moody lighting, sky or horizon, environmental backgrounds, floor tiles or wall textures, sharp edges, low-poly geometry, flat shading, cartoon outlines, text or words rendered in the image. Do not render in a clay, plasticine, or mobile-game style. Do not use uniform matte finish across all materials — each material must have distinct surface properties. Do not use decorative stamped shapes in place of functional mechanical detail.`;
 
 const TYPES = [
-  { id: "blog-hero", label: "Blog Post Hero", ratio: "16:9", desc: "Wide banner for article headers", comp: "Wide composition, subject centered 50-60% width, negative space for text zones." },
-  { id: "feature-hero", label: "Feature Page Hero", ratio: "16:9", desc: "Primary 5P feature illustration", comp: "Machine + gnome as subjects. Machine 65-75% width, gnome at operating position." },
-  { id: "social-sq", label: "Social Square", ratio: "1:1", desc: "Instagram / social", comp: "Tight center crop. Glass chamber + gnome upper body, or single hero pose." },
-  { id: "social-story", label: "Social Story", ratio: "9:16", desc: "Story / Reel", comp: "Vertical: machine upper, gnome lower. Or single gnome full-body centered." },
-  { id: "card", label: "Card Thumbnail", ratio: "4:3", desc: "Link previews, embed cards", comp: "Single focal element. One machine detail, gnome portrait, or key prop. Legible at 300px." },
-  { id: "slide", label: "Slide Illustration", ratio: "16:9", desc: "Deck art with text space", comp: "Subject right 40%, left 60% clean cream for text." },
-  { id: "email", label: "Email Banner", ratio: "3:1", desc: "Newsletter header", comp: "Ultra-wide band. Conveyor detail, machine tops, or gnome upper bodies." },
+  { id: "blog-hero", label: "Blog Post Hero", ratio: "16:9", size: "1536x864", desc: "Wide banner for article headers", comp: "Wide composition, subject centered 50-60% width, negative space for text zones." },
+  { id: "feature-hero", label: "Feature Page Hero", ratio: "16:9", size: "1536x864", desc: "Primary 5P feature illustration", comp: "Machine + gnome as subjects. Machine 65-75% width, gnome at operating position." },
+  { id: "social-sq", label: "Social Square", ratio: "1:1", size: "1024x1024", desc: "Instagram / social", comp: "Tight center crop. Glass chamber + gnome upper body, or single hero pose." },
+  { id: "social-story", label: "Social Story", ratio: "9:16", size: "864x1536", desc: "Story / Reel", comp: "Vertical: machine upper, gnome lower. Or single gnome full-body centered." },
+  { id: "card", label: "Card Thumbnail", ratio: "4:3", size: "1024x768", desc: "Link previews, embed cards", comp: "Single focal element. One machine detail, gnome portrait, or key prop. Legible at 300px." },
+  { id: "slide", label: "Slide Illustration", ratio: "16:9", size: "1536x864", desc: "Deck art with text space", comp: "Subject right 40%, left 60% clean cream for text." },
+  { id: "email", label: "Email Banner", ratio: "3:1", size: "1536x512", desc: "Newsletter header", comp: "Ultra-wide band. Conveyor detail, machine tops, or gnome upper bodies." },
 ];
 
 const MACHINES = [
@@ -355,25 +355,99 @@ export default function RigggPromptBuilder() {
       return;
     }
 
-    setGenState("generating");
-    setGenMessage("Sending to renderer — this usually takes 30-60 seconds...");
+    // Get the correct output size for this format
+    var selectedType = TYPES.find(function(t) { return t.id === assetType; });
+    var outputSize = selectedType ? selectedType.size : "1536x864";
+
+    // Build GitHub raw URLs for reference images
+    var refPaths = [];
+    activeMachines.forEach(function(m) {
+      if (machs.indexOf(m.id) !== -1) {
+        m.refs.forEach(function(filename) {
+          // Determine the path based on filename pattern
+          if (filename.indexOf("factory-") === 0) refPaths.push("environments/" + filename.replace(/-\d+\.png/, "") + "/canonical/" + filename);
+          else {
+            // Check machines and characters
+            activeMachines.forEach(function(mm) { if (mm.refs.indexOf(filename) !== -1) refPaths.push("machines/" + mm.id + "/canonical/" + filename); });
+            activeChars.forEach(function(cc) { if (cc.refs.indexOf(filename) !== -1) refPaths.push("characters/" + cc.id + "/canonical/" + filename); });
+          }
+        });
+      }
+    });
+    activeChars.forEach(function(c) {
+      if (chars.indexOf(c.id) !== -1) {
+        c.refs.forEach(function(filename) {
+          refPaths.push("characters/" + c.id + "/canonical/" + filename);
+        });
+      }
+    });
+    // Deduplicate
+    refPaths = refPaths.filter(function(v, i, a) { return a.indexOf(v) === i; });
+    // Limit to 3 most relevant references
+    refPaths = refPaths.slice(0, 3);
+
+    var refUrls = refPaths.map(function(p) {
+      return "https://raw.githubusercontent.com/" + REPO + "/main/" + p;
+    });
+
+    if (refUrls.length === 0) {
+      // No references — fall back to text-only generation
+      setGenState("generating");
+      setGenMessage("Generating (text-only, no references) — 30-60 seconds...");
+      setGenImage(null);
+      setGenError("");
+
+      fetch("https://api.openai.com/v1/images/generations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + apiKey.trim() },
+        body: JSON.stringify({ model: "gpt-image-2", prompt: prompt, n: 1, size: outputSize, quality: "high" })
+      }).then(function(r) {
+        if (!r.ok) return r.json().then(function(e) { throw new Error(e.error ? e.error.message : "API error " + r.status); });
+        return r.json();
+      }).then(function(data) {
+        if (data.data && data.data[0]) {
+          var img = data.data[0];
+          setGenImage(img.b64_json ? "data:image/png;base64," + img.b64_json : img.url);
+          setGenState("done");
+        } else { setGenState("error"); setGenError("No image returned."); }
+      }).catch(function(err) { setGenState("error"); setGenError(err.message); });
+      return;
+    }
+
+    // Fetch reference images, then use edits endpoint
+    setGenState("fetching-refs");
+    setGenMessage("Fetching " + refUrls.length + " reference images from repo...");
     setGenImage(null);
     setGenError("");
 
-    // Use OpenAI's dedicated image generation API
-    fetch("https://api.openai.com/v1/images/generations", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + apiKey.trim()
-      },
-      body: JSON.stringify({
-        model: "gpt-image-2",
-        prompt: prompt,
-        n: 1,
-        size: "1536x1024",
-        quality: "high"
-      })
+    Promise.all(refUrls.map(function(url) {
+      return fetch(url).then(function(r) {
+        if (!r.ok) throw new Error("Failed to fetch reference: " + url);
+        return r.blob();
+      });
+    })).then(function(blobs) {
+      setGenState("generating");
+      setGenMessage("Sending prompt + " + blobs.length + " reference images to renderer — 30-90 seconds...");
+
+      // Build multipart form data for the edits endpoint
+      var formData = new FormData();
+      formData.append("model", "gpt-image-2");
+      formData.append("prompt", prompt);
+      formData.append("n", "1");
+      formData.append("size", outputSize);
+      formData.append("quality", "high");
+
+      // Append reference images
+      blobs.forEach(function(blob, i) {
+        var filename = refPaths[i].split("/").pop();
+        formData.append("image[]", blob, filename);
+      });
+
+      return fetch("https://api.openai.com/v1/images/edits", {
+        method: "POST",
+        headers: { "Authorization": "Bearer " + apiKey.trim() },
+        body: formData
+      });
     }).then(function(response) {
       if (!response.ok) {
         return response.json().then(function(err) {
@@ -384,16 +458,8 @@ export default function RigggPromptBuilder() {
     }).then(function(data) {
       if (data.data && data.data[0]) {
         var img = data.data[0];
-        if (img.b64_json) {
-          setGenImage("data:image/png;base64," + img.b64_json);
-          setGenState("done");
-        } else if (img.url) {
-          setGenImage(img.url);
-          setGenState("done");
-        } else {
-          setGenState("error");
-          setGenError("Unexpected response format from API.");
-        }
+        setGenImage(img.b64_json ? "data:image/png;base64," + img.b64_json : img.url);
+        setGenState("done");
       } else {
         setGenState("error");
         setGenError("No image returned from API.");
