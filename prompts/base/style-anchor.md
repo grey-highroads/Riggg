@@ -5,19 +5,26 @@ Include this in EVERY image generation prompt for RIGGG assets. It is the non-ne
 ## Core Style Fragment
 
 ```
-Pixar-quality 3D illustration render, high detail, warm and inviting. Slightly elevated isometric 3/4 perspective, camera approximately 30 degrees above horizontal. Clean warm cream background (#FAF5EF), no environment, no sky, no floor extending beyond the object's base — the subject sits on its own base like a diorama on a stage.
+Pixar-quality 3D illustration render at feature-film fidelity, not mobile game or clay-model quality. Slightly elevated isometric 3/4 perspective, camera approximately 30 degrees above horizontal. Clean warm cream background (#FAF5EF), no environment, no sky, no floor extending beyond the object's base — the subject sits on its own base like a diorama on a stage.
 
-Dominant color palette: teal powder-coated metal (#0A5858) and aged bronze/brass hardware with warm patina. Materials include matte teal metal with visible rivets, aged brass with subtle patina, translucent glass with inner volumetric glow, and leather/fabric with visible texture.
+MATERIAL DIFFERENTIATION IS CRITICAL — each material must look and behave distinctly from the others:
+- Teal powder-coated metal (#0A5858): matte finish with very fine grain texture, subtle wear at edges revealing darker underlayer, visible rivets with slight shadow relief. Not smooth plastic.
+- Aged bronze/brass: warm reflective metallic with micro-patina variations, catches key light as bright specular highlights. Must read as metal, not painted wood. Rivets, buckles, and fittings should gleam.
+- Translucent glass: clear with visible refraction, internal volumetric glow that spills colored light onto adjacent surfaces. Not frosted or opaque.
+- Leather/fabric: visible weave or grain texture, slight wear at stress points, distinct from metal surfaces. Belt leather shows tooling marks.
+- Skin: subsurface scattering showing translucency at ear edges and nose, warm blush at cheeks and nose tip, pore-level detail. Not flat matte paint on the face.
 
-Warm key light from upper-left, soft fill from opposite side, subtle rim light on top edges. Rounded edges on all surfaces — nothing sharp. High surface detail density (gauges, dials, rivets, pipe fittings) but clean overall composition with generous negative space.
+Warm key light from upper-left creating defined shadows with soft edges, cool fill from opposite side, subtle rim light on top edges separating subjects from background. Light interacts differently with each material — specular on brass, diffuse on teal metal, scattered through skin, refracted through glass.
 
-Small organic details for warmth: potted succulents, stacked papers, wooden elements. NOT photorealistic. NOT flat illustration. NOT low-poly. NOT sci-fi or digital aesthetic — mechanical and analog.
+High surface detail density: functional mechanical details (pressure gauges with readable dials, pipe fittings with threaded connections, riveted joins with shadow relief, valve handles, small bolts). These should look like they serve a purpose, not decorative rectangles stamped on surfaces. Small organic details for warmth: potted succulents with individual leaf geometry, stacked papers with visible edges, wooden elements with grain.
+
+Rounded edges on all surfaces — nothing sharp. Clean overall composition with generous negative space despite dense object detail.
 ```
 
 ## Negative Prompt Fragment
 
 ```
-Do not include: chrome or silver metal, neon lights, digital screens, holographic displays, circuit board patterns, dark or moody lighting, sky or horizon, environmental backgrounds, floor tiles or wall textures, sharp edges, low-poly geometry, flat shading, cartoon outlines.
+Do not include: chrome or silver metal, neon lights, digital screens, holographic displays, circuit board patterns, dark or moody lighting, sky or horizon, environmental backgrounds, floor tiles or wall textures, sharp edges, low-poly geometry, flat shading, cartoon outlines. Do not render in a clay, plasticine, or mobile-game style. Do not use uniform matte finish across all materials — each material must have distinct surface properties. Do not use decorative stamped shapes in place of functional mechanical detail.
 ```
 
 ## Usage
