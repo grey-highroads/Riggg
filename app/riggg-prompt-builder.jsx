@@ -167,7 +167,7 @@ export default function RigggPromptBuilder() {
   const [copied, setCopied] = useState(false);
   const [apiKey, setApiKey] = useState("");
   const [showKeyInput, setShowKeyInput] = useState(false);
-  const [useRefs, setUseRefs] = useState(true);
+  const [useRefs, setUseRefs] = useState(false);
   const [genState, setGenState] = useState("idle"); // idle | fetching-refs | generating | done | error
   const [genMessage, setGenMessage] = useState("");
   const [genImage, setGenImage] = useState(null); // base64 data URL
@@ -632,7 +632,7 @@ export default function RigggPromptBuilder() {
               <div style={{ width: 16, height: 16, borderRadius: "50%", background: "#fff", position: "absolute", top: 2, left: useRefs ? 18 : 2, transition: "left 0.15s", boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }} />
             </div>
             <span style={{ fontSize: 12.5, color: "#707060" }}>
-              {useRefs ? "Reference images ON — uses edits endpoint with canonical assets attached" : "Reference images OFF — text-only generation via generations endpoint"}
+              {useRefs ? "Reference images ON — requires backend proxy (CORS restricted from browser)" : "Reference images OFF — text-only generation via generations endpoint"}
             </span>
           </div>
         </div>
