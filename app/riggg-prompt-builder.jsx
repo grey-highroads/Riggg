@@ -171,8 +171,6 @@ export default function RigggPromptBuilder() {
   const [notes, setNotes] = useState("");
   const [built, setBuilt] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [apiKey, setApiKey] = useState("");
-  const [showKeyInput, setShowKeyInput] = useState(false);
   const [useRefs, setUseRefs] = useState(true);
   const [genState, setGenState] = useState("idle"); // idle | fetching-refs | generating | done | error
   const [genMessage, setGenMessage] = useState("");
@@ -574,25 +572,9 @@ export default function RigggPromptBuilder() {
           <textarea style={Object.assign({}, inputBase, { marginTop: 8, resize: "vertical" })} rows={2} value={notes} onChange={function(e) { setNotes(e.target.value); }} placeholder="Additional direction — mood, specific props, composition..." />
         </div>
 
-        {/* API Key (collapsible) */}
+        {/* Reference images toggle */}
         <div style={{ paddingTop: 20 }}>
-          <div onClick={function() { setShowKeyInput(!showKeyInput); }} style={{ display: "inline-flex", alignItems: "center", gap: 6, cursor: "pointer", fontSize: 12.5, color: "#707060" }}>
-            <span style={{ transform: showKeyInput ? "rotate(90deg)" : "rotate(0)", transition: "transform 0.15s", display: "inline-block" }}>▶</span>
-            <span>{apiKey ? "✓ OpenAI API key set" : "Set OpenAI API key for image generation"}</span>
-          </div>
-          {showKeyInput && (
-            <div style={{ marginTop: 8 }}>
-              <input
-                type="password"
-                style={Object.assign({}, inputBase, { maxWidth: 400 })}
-                value={apiKey}
-                onChange={function(e) { setApiKey(e.target.value); }}
-                placeholder="sk-..."
-              />
-              <div style={{ fontSize: 11, color: "#B0A898", marginTop: 4 }}>Stored in memory only — never saved or transmitted except to OpenAI's API.</div>
-            </div>
-          )}
-          <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <div onClick={function() { setUseRefs(!useRefs); }} style={{ width: 36, height: 20, borderRadius: 10, background: useRefs ? "#4CAF50" : "#B0A898", cursor: "pointer", position: "relative", transition: "background 0.15s" }}>
               <div style={{ width: 16, height: 16, borderRadius: "50%", background: "#fff", position: "absolute", top: 2, left: useRefs ? 18 : 2, transition: "left 0.15s", boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }} />
             </div>
@@ -605,7 +587,7 @@ export default function RigggPromptBuilder() {
         {/* Compile */}
         <div style={{ display: "flex", gap: 10, padding: "16px 0 16px" }}>
           <button onClick={function() { setBuilt(true); }} disabled={!ready} style={{ padding: "12px 24px", fontSize: 14, fontWeight: 600, fontFamily: "'DM Sans', sans-serif", background: ready ? "#0A5858" : "#B0A898", color: "#FAF5EF", border: "none", borderRadius: 8, cursor: ready ? "pointer" : "not-allowed" }}>Compile Prompt</button>
-          {built && prompt && apiKey && (
+          {built && prompt && (
             <button onClick={doGenerate} disabled={genState === "fetching-refs" || genState === "generating"} style={{ padding: "12px 24px", fontSize: 14, fontWeight: 600, fontFamily: "'DM Sans', sans-serif", background: genState === "generating" || genState === "fetching-refs" ? "#707060" : "#4CAF50", color: "#FAF5EF", border: "none", borderRadius: 8, cursor: genState === "generating" ? "wait" : "pointer", display: "flex", alignItems: "center", gap: 8 }}>
               {genState === "fetching-refs" || genState === "generating" ? "Generating..." : "Generate Image"}
             </button>
