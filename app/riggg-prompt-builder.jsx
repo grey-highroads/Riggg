@@ -378,16 +378,17 @@ export default function RigggPromptBuilder() {
     };
 
     // ── Selection-aware reference policy ─────────────────────────────
-    // Only include refs for objects the user actually selected.
-    // Policy: 1 style ref (exterior) + 1 per selected machine + 1 per selected character
+    // Only include refs for objects the user explicitly selected.
+    // No automatic style refs — the style anchor text handles rendering quality.
+    // Machine and character canonicals already carry the full visual language.
     var selectedRefs = [];
 
-    // Always include factory exterior as the base style reference (unless user selected interior instead)
-    if (envs.indexOf("factory-interior") !== -1) {
-      selectedRefs.push({ file: "factory-interior-1.png", role: ASSET_REGISTRY["factory-interior-1.png"].role });
-    } else {
-      selectedRefs.push({ file: "factory-exterior-1.png", role: ASSET_REGISTRY["factory-exterior-1.png"].role });
-    }
+    // Environment refs only if explicitly selected in Step 4
+    envs.forEach(function(id) {
+      var envFile = id === "factory-exterior" ? "factory-exterior-1.png" : "factory-interior-1.png";
+      var entry = ASSET_REGISTRY[envFile];
+      if (entry) selectedRefs.push({ file: envFile, role: entry.role });
+    });
 
     // Add identity ref for each selected machine (the machine's own canonical)
     machs.forEach(function(id) {
