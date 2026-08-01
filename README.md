@@ -37,7 +37,7 @@ riggg-brand-system/
 │
 ├── foundation/                      # Brand primitives
 │   ├── color/TOKENS.md              # Color system
-│   ├── typography/                  # Font choices (TBD)
+│   ├── typography/                  # Planned — font choices not yet selected
 │   └── world-rules/
 │       ├── RENDERING.md             # 3D style rules
 │       ├── CONSISTENCY.md           # Validation checklist
@@ -70,9 +70,9 @@ riggg-brand-system/
 ├── components/                      # Web UI patterns
 │   └── COMPONENT-MAP.md
 │
-└── assets/                          # Derived assets
-    ├── icons/
-    └── patterns/
+└── assets/                          # Planned — derived assets
+    ├── icons/                       # Planned — icon set from machine details
+    └── patterns/                    # Planned — repeatable pattern elements
 ```
 
 ## Asset Naming Convention

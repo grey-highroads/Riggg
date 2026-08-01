@@ -360,57 +360,95 @@ export default function RigggPromptBuilder() {
     var selectedType = TYPES.find(function(t) { return t.id === assetType; });
     var outputSize = selectedType ? selectedType.size : "1536x864";
 
-    // Map filenames to their actual repo paths deterministically
-    // Machine images live in machines/{id}/canonical/
-    // Character images live in characters/{id}/canonical/
-    // Environment images live in environments/{dir}/canonical/
-    var knownPaths = {};
-    activeMachines.forEach(function(m) {
-      m.refs.forEach(function(f) {
-        if (f.indexOf("factory-exterior") === 0) knownPaths[f] = "environments/factory-exterior/canonical/" + f;
-        else if (f.indexOf("factory-interior") === 0) knownPaths[f] = "environments/factory-interior/canonical/" + f;
-        else if (f.indexOf("capture-rig") === 0) knownPaths[f] = "machines/produce/canonical/" + f;
-        else if (f.indexOf("assembly-press") === 0) knownPaths[f] = "machines/package/canonical/" + f;
-        else if (f.indexOf("distribution-engine") === 0) knownPaths[f] = "machines/publish/canonical/" + f;
-        else if (f.indexOf("insight-scope") === 0) knownPaths[f] = "machines/prove/canonical/" + f;
-        else if (f.indexOf("memory-vault") === 0) knownPaths[f] = "machines/preserve/canonical/" + f;
-        else if (f.indexOf("spark") === 0) knownPaths[f] = "characters/produce-gnome/canonical/" + f;
-        else if (f.indexOf("crafter") === 0) knownPaths[f] = "characters/package-gnome/canonical/" + f;
-        else if (f.indexOf("router") === 0) knownPaths[f] = "characters/publish-gnome/canonical/" + f;
-        else if (f.indexOf("lens") === 0) knownPaths[f] = "characters/prove-gnome/canonical/" + f;
-        else if (f.indexOf("keeper") === 0) knownPaths[f] = "characters/preserve-gnome/canonical/" + f;
-      });
-    });
-    activeChars.forEach(function(c) {
-      c.refs.forEach(function(f) {
-        if (!knownPaths[f]) {
-          if (f.indexOf("spark") === 0) knownPaths[f] = "characters/produce-gnome/canonical/" + f;
-          else if (f.indexOf("crafter") === 0) knownPaths[f] = "characters/package-gnome/canonical/" + f;
-          else if (f.indexOf("router") === 0) knownPaths[f] = "characters/publish-gnome/canonical/" + f;
-          else if (f.indexOf("lens") === 0) knownPaths[f] = "characters/prove-gnome/canonical/" + f;
-          else if (f.indexOf("keeper") === 0) knownPaths[f] = "characters/preserve-gnome/canonical/" + f;
-        }
-      });
+    // ── Asset Registry ──────────────────────────────────────────────
+    // Single source of truth: filename → { path, type, owner, role }
+    var ASSET_REGISTRY = {
+      "factory-exterior-1.png": { path: "environments/factory-exterior/canonical/factory-exterior-1.png", type: "environment", owner: "factory-exterior", role: "Overall RIGGG factory style, architecture, color palette, and lighting reference" },
+      "factory-interior-1.png": { path: "environments/factory-interior/canonical/factory-interior-1.png", type: "environment", owner: "factory-interior", role: "Factory interior environment, warm amber lighting, conveyor system reference" },
+      "capture-rig_produce-green.png": { path: "machines/produce/canonical/capture-rig_produce-green.png", type: "machine", owner: "produce", role: "Produce machine identity — preserve this machine's form, green glow, and mechanical details" },
+      "assembly-press_package-purple.png": { path: "machines/package/canonical/assembly-press_package-purple.png", type: "machine", owner: "package", role: "Package machine identity — preserve this machine's multi-stage form, purple glow, and output variety" },
+      "distribution-engine_publish-blue.png": { path: "machines/publish/canonical/distribution-engine_publish-blue.png", type: "machine", owner: "publish", role: "Publish machine identity — preserve this machine's sorting mechanism, blue glow, and channel chutes" },
+      "insight-scope_prove-red.png": { path: "machines/prove/canonical/insight-scope_prove-red.png", type: "machine", owner: "prove", role: "Prove machine identity — preserve this machine's magnifying apparatus, red glow, and gauge density" },
+      "memory-vault_preserve-amber.png": { path: "machines/preserve/canonical/memory-vault_preserve-amber.png", type: "machine", owner: "preserve", role: "Preserve machine identity — preserve this machine's filing cabinet form, amber glow, and archival details" },
+      "spark_produce-green.png": { path: "characters/produce-gnome/canonical/spark_produce-green.png", type: "character", owner: "produce-gnome", role: "Spark character identity — preserve this gnome's proportions, uniform, headphones, and alert expression" },
+      "crafter_package-purple.png": { path: "characters/package-gnome/canonical/crafter_package-purple.png", type: "character", owner: "package-gnome", role: "Crafter character identity — preserve this gnome's proportions, purple accents, ink roller, and industrious expression" },
+      "router_publish-blue.png": { path: "characters/publish-gnome/canonical/router_publish-blue.png", type: "character", owner: "publish-gnome", role: "Router character identity — preserve this gnome's proportions, package-carrying pose, and efficient energy" },
+      "lens_prove-red.png": { path: "characters/prove-gnome/canonical/lens_prove-red.png", type: "character", owner: "prove-gnome", role: "Lens character identity — preserve this gnome's red uniform, clipboard, and analytical expression" },
+      "keeper_preserve-amber.png": { path: "characters/preserve-gnome/canonical/keeper_preserve-amber.png", type: "character", owner: "preserve-gnome", role: "Keeper character identity — preserve this gnome's amber accents, jar, ledger, and protective expression" },
+    };
+
+    // ── Selection-aware reference policy ─────────────────────────────
+    // Only include refs for objects the user actually selected.
+    // Policy: 1 style ref (exterior) + 1 per selected machine + 1 per selected character
+    var selectedRefs = [];
+
+    // Always include factory exterior as the base style reference (unless user selected interior instead)
+    if (envs.indexOf("factory-interior") !== -1) {
+      selectedRefs.push({ file: "factory-interior-1.png", role: ASSET_REGISTRY["factory-interior-1.png"].role });
+    } else {
+      selectedRefs.push({ file: "factory-exterior-1.png", role: ASSET_REGISTRY["factory-exterior-1.png"].role });
+    }
+
+    // Add identity ref for each selected machine (the machine's own canonical)
+    machs.forEach(function(id) {
+      var m = activeMachines.find(function(x) { return x.id === id; });
+      if (m) {
+        // Find the machine's own canonical image (not gnome or env refs)
+        m.refs.forEach(function(f) {
+          var entry = ASSET_REGISTRY[f];
+          if (entry && entry.type === "machine" && entry.owner === id) {
+            selectedRefs.push({ file: f, role: entry.role });
+          }
+        });
+      }
     });
 
-    // Collect unique filenames from selected objects
-    var refFiles = [];
-    machs.forEach(function(id) { var m = activeMachines.find(function(x) { return x.id === id; }); if (m) m.refs.forEach(function(f) { if (refFiles.indexOf(f) === -1) refFiles.push(f); }); });
-    chars.forEach(function(id) { var c = activeChars.find(function(x) { return x.id === id; }); if (c) c.refs.forEach(function(f) { if (refFiles.indexOf(f) === -1) refFiles.push(f); }); });
-    envs.forEach(function(id) { var e = activeEnvs.find(function(x) { return x.id === id; }); if (e) e.refs.forEach(function(f) { if (refFiles.indexOf(f) === -1) refFiles.push(f); }); });
+    // Add identity ref for each selected character
+    chars.forEach(function(id) {
+      var c = activeChars.find(function(x) { return x.id === id; });
+      if (c) {
+        c.refs.forEach(function(f) {
+          var entry = ASSET_REGISTRY[f];
+          if (entry && entry.type === "character") {
+            selectedRefs.push({ file: f, role: entry.role });
+          }
+        });
+      }
+    });
 
-    // Resolve to full paths, limit to 3
-    var refPaths = refFiles.map(function(f) { return knownPaths[f]; }).filter(Boolean);
-    refPaths = refPaths.filter(function(v, i, a) { return a.indexOf(v) === i; }).slice(0, 3);
+    // Deduplicate and cap at 4 (style ref + up to 3 identity refs)
+    var seen = {};
+    selectedRefs = selectedRefs.filter(function(r) {
+      if (seen[r.file]) return false;
+      seen[r.file] = true;
+      return true;
+    }).slice(0, 4);
+
+    // Resolve to paths and URLs
+    var refPaths = selectedRefs.map(function(r) { return ASSET_REGISTRY[r.file].path; });
+    var refRoles = selectedRefs.map(function(r) { return r.role; });
 
     var refUrls = refPaths.map(function(p) {
       return "https://raw.githubusercontent.com/" + REPO + "/main/" + p;
     });
 
-    if (refUrls.length === 0 || !useRefs) {
-      // Text-only generation via /v1/images/generations (the proven A-quality path)
+    // ── Build image role label block for the prompt ──────────────────
+    var imageRoleBlock = "";
+    if (useRefs && selectedRefs.length > 0) {
+      imageRoleBlock = "\n\nREFERENCE IMAGES (attached):\n";
+      selectedRefs.forEach(function(r, i) {
+        imageRoleBlock += "Image " + (i + 1) + ": " + r.role + "\n";
+      });
+      imageRoleBlock += "Use these images as strict style and identity references. Match the rendering quality, material properties, and character proportions shown in the references.";
+    }
+
+    // Append image role labels to the prompt when using refs
+    var generationPrompt = prompt + imageRoleBlock;
+
+    if (!useRefs || refUrls.length === 0) {
+      // Text-only generation via /v1/images/generations
       setGenState("generating");
-      setGenMessage("Generating (text-only" + (useRefs ? ", no refs found" : "") + ") — 30-60 seconds...");
+      setGenMessage("Generating (text-only) — 30-60 seconds...");
       setGenImage(null);
       setGenError("");
 
@@ -431,7 +469,7 @@ export default function RigggPromptBuilder() {
       return;
     }
 
-    // Fetch reference images, then use edits endpoint
+    // Fetch reference images, then use edits endpoint with role-labeled prompt
     setGenState("fetching-refs");
     setGenMessage("Fetching " + refUrls.length + " reference images from repo...");
     setGenImage(null);
@@ -439,22 +477,20 @@ export default function RigggPromptBuilder() {
 
     Promise.all(refUrls.map(function(url) {
       return fetch(url).then(function(r) {
-        if (!r.ok) throw new Error("Failed to fetch reference: " + url);
+        if (!r.ok) throw new Error("Failed to fetch: " + url.split("/").pop());
         return r.blob();
       });
     })).then(function(blobs) {
       setGenState("generating");
       setGenMessage("Sending prompt + " + blobs.length + " reference images to renderer — 30-90 seconds...");
 
-      // Build multipart form data for the edits endpoint
       var formData = new FormData();
       formData.append("model", "gpt-image-2");
-      formData.append("prompt", prompt);
+      formData.append("prompt", generationPrompt);
       formData.append("n", "1");
       formData.append("size", outputSize);
       formData.append("quality", "high");
 
-      // Append reference images
       blobs.forEach(function(blob, i) {
         var filename = refPaths[i].split("/").pop();
         formData.append("image[]", blob, filename);
@@ -695,7 +731,7 @@ export default function RigggPromptBuilder() {
               <div style={{ width: 16, height: 16, borderRadius: "50%", background: "#fff", position: "absolute", top: 2, left: useRefs ? 18 : 2, transition: "left 0.15s", boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }} />
             </div>
             <span style={{ fontSize: 12.5, color: "#707060" }}>
-              {useRefs ? "Reference images ON — uses edits endpoint with canonical assets as style refs" : "Reference images OFF — text-only generation (proven A-quality path)"}
+              {useRefs ? "Reference images ON — uses edits endpoint with canonical assets attached" : "Reference images OFF — text-only generation via generations endpoint"}
             </span>
           </div>
         </div>
