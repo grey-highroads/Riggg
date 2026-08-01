@@ -1,0 +1,280 @@
+{
+  "generated": "2026-08-01T13:44:07.112Z",
+  "machines": [
+    {
+      "id": "produce",
+      "name": "The Capture Rig",
+      "type": "machine",
+      "guidance": {
+        "context": "machines/produce/CONTEXT.md",
+        "usage": "machines/produce/USAGE.md"
+      },
+      "canonicalAssets": [
+        {
+          "role": "machine-identity",
+          "file": "capture-rig_produce-green.png",
+          "path": "machines/produce/canonical/capture-rig_produce-green.png"
+        }
+      ],
+      "feature": "Produce",
+      "operator": "produce-gnome",
+      "accent": "#4CAF50"
+    },
+    {
+      "id": "package",
+      "name": "The Assembly Press",
+      "type": "machine",
+      "guidance": {
+        "context": "machines/package/CONTEXT.md",
+        "usage": "machines/package/USAGE.md"
+      },
+      "canonicalAssets": [
+        {
+          "role": "machine-identity",
+          "file": "assembly-press_package-purple.png",
+          "path": "machines/package/canonical/assembly-press_package-purple.png"
+        }
+      ],
+      "feature": "Package",
+      "operator": "package-gnome",
+      "accent": "#9C27B0"
+    },
+    {
+      "id": "publish",
+      "name": "The Distribution Engine",
+      "type": "machine",
+      "guidance": {
+        "context": "machines/publish/CONTEXT.md",
+        "usage": "machines/publish/USAGE.md"
+      },
+      "canonicalAssets": [
+        {
+          "role": "machine-identity",
+          "file": "distribution-engine_publish-blue.png",
+          "path": "machines/publish/canonical/distribution-engine_publish-blue.png"
+        }
+      ],
+      "feature": "Publish",
+      "operator": "publish-gnome",
+      "accent": "#2196F3"
+    },
+    {
+      "id": "prove",
+      "name": "The Insight Scope",
+      "type": "machine",
+      "guidance": {
+        "context": "machines/prove/CONTEXT.md",
+        "usage": "machines/prove/USAGE.md"
+      },
+      "canonicalAssets": [
+        {
+          "role": "machine-identity",
+          "file": "insight-scope_prove-red.png",
+          "path": "machines/prove/canonical/insight-scope_prove-red.png"
+        }
+      ],
+      "feature": "Prove",
+      "operator": "prove-gnome",
+      "accent": "#E91E63"
+    },
+    {
+      "id": "preserve",
+      "name": "The Memory Vault",
+      "type": "machine",
+      "guidance": {
+        "context": "machines/preserve/CONTEXT.md",
+        "usage": "machines/preserve/USAGE.md"
+      },
+      "canonicalAssets": [
+        {
+          "role": "machine-identity",
+          "file": "memory-vault_preserve-amber.png",
+          "path": "machines/preserve/canonical/memory-vault_preserve-amber.png"
+        }
+      ],
+      "feature": "Preserve",
+      "operator": "preserve-gnome",
+      "accent": "#FF9800"
+    }
+  ],
+  "characters": [
+    {
+      "id": "package-gnome",
+      "name": "Crafter",
+      "type": "character",
+      "guidance": {
+        "context": "characters/package-gnome/CONTEXT.md",
+        "usage": "characters/package-gnome/USAGE.md"
+      },
+      "canonicalAssets": [
+        {
+          "role": "character-identity",
+          "file": "crafter_package-purple.png",
+          "path": "characters/package-gnome/canonical/crafter_package-purple.png"
+        }
+      ],
+      "title": "Master Packager",
+      "feature": "Package",
+      "machine": "package",
+      "accent": "#9C27B0"
+    },
+    {
+      "id": "preserve-gnome",
+      "name": "Keeper",
+      "type": "character",
+      "guidance": {
+        "context": "characters/preserve-gnome/CONTEXT.md",
+        "usage": "characters/preserve-gnome/USAGE.md"
+      },
+      "canonicalAssets": [
+        {
+          "role": "character-identity",
+          "file": "keeper_preserve-amber.png",
+          "path": "characters/preserve-gnome/canonical/keeper_preserve-amber.png"
+        }
+      ],
+      "title": "Chief Archivist",
+      "feature": "Preserve",
+      "machine": "preserve",
+      "accent": "#FF9800"
+    },
+    {
+      "id": "produce-gnome",
+      "name": "Spark",
+      "type": "character",
+      "guidance": {
+        "context": "characters/produce-gnome/CONTEXT.md",
+        "usage": "characters/produce-gnome/USAGE.md"
+      },
+      "canonicalAssets": [
+        {
+          "role": "character-identity",
+          "file": "spark_produce-green.png",
+          "path": "characters/produce-gnome/canonical/spark_produce-green.png"
+        }
+      ],
+      "title": "Master Producer",
+      "feature": "Produce",
+      "machine": "produce",
+      "accent": "#4CAF50"
+    },
+    {
+      "id": "prove-gnome",
+      "name": "Lens",
+      "type": "character",
+      "guidance": {
+        "context": "characters/prove-gnome/CONTEXT.md",
+        "usage": "characters/prove-gnome/USAGE.md"
+      },
+      "canonicalAssets": [
+        {
+          "role": "character-identity",
+          "file": "lens_prove-red.png",
+          "path": "characters/prove-gnome/canonical/lens_prove-red.png"
+        }
+      ],
+      "title": "Chief Analyst",
+      "feature": "Prove",
+      "machine": "prove",
+      "accent": "#E91E63"
+    },
+    {
+      "id": "publish-gnome",
+      "name": "Router",
+      "type": "character",
+      "guidance": {
+        "context": "characters/publish-gnome/CONTEXT.md",
+        "usage": "characters/publish-gnome/USAGE.md"
+      },
+      "canonicalAssets": [
+        {
+          "role": "character-identity",
+          "file": "router_publish-blue.png",
+          "path": "characters/publish-gnome/canonical/router_publish-blue.png"
+        }
+      ],
+      "title": "Distribution Chief",
+      "feature": "Publish",
+      "machine": "publish",
+      "accent": "#2196F3"
+    }
+  ],
+  "environments": [
+    {
+      "id": "factory-exterior",
+      "name": "Factory Exterior",
+      "type": "environment",
+      "guidance": {
+        "context": "environments/factory-exterior/CONTEXT.md",
+        "usage": "environments/factory-exterior/USAGE.md"
+      },
+      "canonicalAssets": [
+        {
+          "role": "environment-reference",
+          "file": "factory-exterior-1.png",
+          "path": "environments/factory-exterior/canonical/factory-exterior-1.png"
+        }
+      ]
+    },
+    {
+      "id": "factory-interior",
+      "name": "Factory Interior",
+      "type": "environment",
+      "guidance": {
+        "context": "environments/factory-interior/CONTEXT.md",
+        "usage": "environments/factory-interior/USAGE.md"
+      },
+      "canonicalAssets": [
+        {
+          "role": "environment-reference",
+          "file": "factory-interior-1.png",
+          "path": "environments/factory-interior/canonical/factory-interior-1.png"
+        }
+      ]
+    }
+  ],
+  "formats": [
+    {
+      "id": "blog-hero",
+      "label": "Blog Post Hero",
+      "ratio": "16:9",
+      "size": "1536x864"
+    },
+    {
+      "id": "feature-hero",
+      "label": "Feature Page Hero",
+      "ratio": "16:9",
+      "size": "1536x864"
+    },
+    {
+      "id": "social-sq",
+      "label": "Social Square",
+      "ratio": "1:1",
+      "size": "1024x1024"
+    },
+    {
+      "id": "social-story",
+      "label": "Social Story",
+      "ratio": "9:16",
+      "size": "864x1536"
+    },
+    {
+      "id": "card",
+      "label": "Card Thumbnail",
+      "ratio": "4:3",
+      "size": "1024x768"
+    },
+    {
+      "id": "slide",
+      "label": "Slide Illustration",
+      "ratio": "16:9",
+      "size": "1536x864"
+    },
+    {
+      "id": "email",
+      "label": "Email Banner",
+      "ratio": "3:1",
+      "size": "1536x512"
+    }
+  ]
+}

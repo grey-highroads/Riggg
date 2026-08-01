@@ -1,3 +1,17 @@
+---
+id: publish-gnome
+type: character
+name: "Router"
+title: "Distribution Chief"
+feature: Publish
+machine: publish
+accent: "#2196F3"
+canonical_assets:
+  - role: character-identity
+    file: "router_publish-blue.png"
+    path: "characters/publish-gnome/canonical/router_publish-blue.png"
+---
+
 # Router — Context
 
 ## Identity

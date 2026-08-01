@@ -1,3 +1,16 @@
+---
+id: prove
+type: machine
+name: "The Insight Scope"
+feature: Prove
+operator: prove-gnome
+accent: "#E91E63"
+canonical_assets:
+  - role: machine-identity
+    file: "insight-scope_prove-red.png"
+    path: "machines/prove/canonical/insight-scope_prove-red.png"
+---
+
 # The Insight Scope — Context
 
 ## Feature Identity

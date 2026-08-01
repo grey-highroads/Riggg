@@ -1,3 +1,16 @@
+---
+id: publish
+type: machine
+name: "The Distribution Engine"
+feature: Publish
+operator: publish-gnome
+accent: "#2196F3"
+canonical_assets:
+  - role: machine-identity
+    file: "distribution-engine_publish-blue.png"
+    path: "machines/publish/canonical/distribution-engine_publish-blue.png"
+---
+
 # The Distribution Engine — Context
 
 ## Feature Identity

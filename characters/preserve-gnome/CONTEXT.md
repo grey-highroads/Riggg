@@ -1,3 +1,17 @@
+---
+id: preserve-gnome
+type: character
+name: "Keeper"
+title: "Chief Archivist"
+feature: Preserve
+machine: preserve
+accent: "#FF9800"
+canonical_assets:
+  - role: character-identity
+    file: "keeper_preserve-amber.png"
+    path: "characters/preserve-gnome/canonical/keeper_preserve-amber.png"
+---
+
 # Keeper — Context
 
 ## Identity

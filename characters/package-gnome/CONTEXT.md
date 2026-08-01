@@ -1,3 +1,17 @@
+---
+id: package-gnome
+type: character
+name: "Crafter"
+title: "Master Packager"
+feature: Package
+machine: package
+accent: "#9C27B0"
+canonical_assets:
+  - role: character-identity
+    file: "crafter_package-purple.png"
+    path: "characters/package-gnome/canonical/crafter_package-purple.png"
+---
+
 # Crafter — Context
 
 ## Identity

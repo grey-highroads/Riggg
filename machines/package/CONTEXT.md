@@ -1,3 +1,16 @@
+---
+id: package
+type: machine
+name: "The Assembly Press"
+feature: Package
+operator: package-gnome
+accent: "#9C27B0"
+canonical_assets:
+  - role: machine-identity
+    file: "assembly-press_package-purple.png"
+    path: "machines/package/canonical/assembly-press_package-purple.png"
+---
+
 # The Assembly Press — Context
 
 ## Feature Identity

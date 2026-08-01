@@ -1,3 +1,13 @@
+---
+id: factory-exterior
+type: environment
+name: "Factory Exterior"
+canonical_assets:
+  - role: environment-reference
+    file: "factory-exterior-1.png"
+    path: "environments/factory-exterior/canonical/factory-exterior-1.png"
+---
+
 # Factory Exterior — Context
 
 ## Identity

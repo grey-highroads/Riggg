@@ -86,159 +86,59 @@ function getRefs(machs, chars, envs) {
 var REPO = "grey-highroads/Riggg";
 var RAW = function(path) { return "https://raw.githubusercontent.com/" + REPO + "/main/" + path; };
 
-function parseSections(md) {
-  var s = {};
-  var key = null;
-  md.split("\n").forEach(function(line) {
-    var h = line.match(/^#{2,3}\s+(.+)/);
-    if (h) { key = h[1].trim(); s[key] = ""; }
-    else if (key != null) { s[key] += line + "\n"; }
-  });
-  for (var k in s) { s[k] = s[k].trim(); }
-  return s;
-}
-
-function getField(sections, section, label) {
-  var block = sections[section] || "";
-  var re = new RegExp("\\*\\*" + label + ":\\*\\*\\s*(.+)", "i");
-  var m = block.match(re);
-  return m ? m[1].replace(/`/g, "").trim() : "";
-}
-
-function getCodeBlock(text) {
-  var m = text.match(/```[\w]*\n([\s\S]*?)```/);
-  return m ? m[1].trim() : "";
-}
-
-function getTitle(md) {
-  var m = md.match(/^#\s+(.+?)(?:\s*—.*)?$/m);
-  return m ? m[1].trim() : "";
-}
-
-function getImageRefs(text) {
-  var refs = [];
-  var matches = text.match(/`([^`]*\.png)`/g);
-  if (matches) { matches.forEach(function(m) { refs.push(m.replace(/`/g, "")); }); }
-  return refs;
-}
-
-var PCOLORS = { produce: ["#4CAF50", "Green"], package: ["#9C27B0", "Purple"], publish: ["#2196F3", "Blue"], prove: ["#E91E63", "Pink"], preserve: ["#FF9800", "Amber"] };
+var COLOR_NAMES = { "#4CAF50": "Green", "#9C27B0": "Purple", "#2196F3": "Blue", "#E91E63": "Pink", "#FF9800": "Amber" };
 
 async function syncFromRepo() {
-  var treeResp = await fetch("https://api.github.com/repos/" + REPO + "/git/trees/main?recursive=1");
-  if (!treeResp.ok) throw new Error("GitHub API: " + treeResp.status);
-  var treeData = await treeResp.json();
-  var allPaths = treeData.tree.filter(function(t) { return t.type === "blob"; }).map(function(t) { return t.path; });
+  // Fetch the manifest — single file, structured data, no parsing
+  var resp = await fetch(RAW("brand-system.json"));
+  if (!resp.ok) throw new Error("Could not fetch brand-system.json: " + resp.status);
+  var manifest = await resp.json();
 
-  var machDirs = [];
-  var charDirs = [];
-  var envDirs = [];
-  allPaths.forEach(function(p) {
-    var machMatch = p.match(/^machines\/([^_][^/]+)\/CONTEXT\.md$/);
-    if (machMatch && machDirs.indexOf(machMatch[1]) === -1) machDirs.push(machMatch[1]);
-    var charMatch = p.match(/^characters\/([^_][^/]+)\/CONTEXT\.md$/);
-    if (charMatch && charDirs.indexOf(charMatch[1]) === -1) charDirs.push(charMatch[1]);
-    var envMatch = p.match(/^environments\/([^/]+)\/CONTEXT\.md$/);
-    if (envMatch && envDirs.indexOf(envMatch[1]) === -1) envDirs.push(envMatch[1]);
-  });
-
-  // Fetch style anchor
+  // Also fetch the style anchor (creative prose, read as-is)
   var styleAnchor = "";
   var negPrompt = "";
   try {
     var saResp = await fetch(RAW("prompts/base/style-anchor.md"));
     var saText = await saResp.text();
-    var saSec = parseSections(saText);
-    styleAnchor = getCodeBlock(saSec["Core Style Fragment"] || "") || getCodeBlock(saText);
-    negPrompt = getCodeBlock(saSec["Negative Prompt Fragment"] || "");
+    // Extract code blocks for style and negative
+    var styleMatch = saText.match(/## Core Style Fragment[\s\S]*?```[\w]*\n([\s\S]*?)```/);
+    var negMatch = saText.match(/## Negative Prompt Fragment[\s\S]*?```[\w]*\n([\s\S]*?)```/);
+    if (styleMatch) styleAnchor = styleMatch[1].trim();
+    if (negMatch) negPrompt = negMatch[1].trim();
   } catch(e) { /* use fallback */ }
 
-  // Fetch machines
-  var machines = [];
-  for (var i = 0; i < machDirs.length; i++) {
-    var dir = machDirs[i];
-    try {
-      var ctxResp = await fetch(RAW("machines/" + dir + "/CONTEXT.md"));
-      var useResp = await fetch(RAW("machines/" + dir + "/USAGE.md"));
-      var ctxText = await ctxResp.text();
-      var useText = await useResp.text();
-      var ctx = parseSections(ctxText);
-      var use = parseSections(useText);
+  // Transform manifest entries into the shape the app expects
+  var machines = manifest.machines.map(function(m) {
+    return {
+      id: m.id, p: m.feature, name: m.name,
+      color: m.accent, colorName: COLOR_NAMES[m.accent] || "Teal",
+      gnome: m.operator,
+      // These fields come from creative prose — use fallback data
+      tagline: (MACHINES.find(function(fb) { return fb.id === m.id; }) || {}).tagline || "",
+      quality: (MACHINES.find(function(fb) { return fb.id === m.id; }) || {}).quality || "",
+      emotion: (MACHINES.find(function(fb) { return fb.id === m.id; }) || {}).emotion || "",
+      prompt: (MACHINES.find(function(fb) { return fb.id === m.id; }) || {}).prompt || "",
+      refs: m.canonicalAssets.map(function(a) { return a.file; }),
+    };
+  });
 
-      var pName = getField(ctx, "Feature Identity", "RIGGG feature") || dir;
-      var gnomeId = getField(ctx, "Feature Identity", "Assigned gnome").toLowerCase();
-      var emotion = (ctx["Emotional Register"] || "").split("\n").filter(function(l) { return l.trim() && l.indexOf("**") === 0; })[0] || "";
-      emotion = emotion.replace(/^\*\*[^*]+\*\*\s*/, "").trim();
-      var tagline = getField(ctx, "Business Context", "What this feature does \\(plain language\\)");
-      var quality = getField(ctx, "Business Context", "Quality question");
-      // Get prompt from Prompt Fragments section code block, or first code block in USAGE
-      var promptText = getCodeBlock(use["Prompt Fragments"] || "") || getCodeBlock(useText);
-      var refs = getImageRefs(use["Canonical Assets"] || useText);
-      if (refs.length === 0) refs.push("factory-exterior-1.png");
+  var characters = manifest.characters.map(function(c) {
+    return {
+      id: c.id, name: c.name, title: c.title, machine: c.machine,
+      signature: (CHARS.find(function(fb) { return fb.id === c.id; }) || {}).signature || "",
+      prompt: (CHARS.find(function(fb) { return fb.id === c.id; }) || {}).prompt || "",
+      refs: c.canonicalAssets.map(function(a) { return a.file; }),
+    };
+  });
 
-      machines.push({
-        id: dir, p: pName, name: getTitle(ctxText),
-        color: PCOLORS[dir] ? PCOLORS[dir][0] : "#0A5858",
-        colorName: PCOLORS[dir] ? PCOLORS[dir][1] : "Teal",
-        gnome: gnomeId ? charDirs.find(function(d) { return d.indexOf(gnomeId) !== -1; }) || dir + "-gnome" : dir + "-gnome",
-        tagline: tagline, quality: quality, emotion: emotion,
-        prompt: promptText, refs: refs
-      });
-    } catch(e) { console.warn("Machine " + dir + ":", e); }
-  }
-
-  // Fetch characters
-  var characters = [];
-  for (var j = 0; j < charDirs.length; j++) {
-    var cdir = charDirs[j];
-    try {
-      var cCtxResp = await fetch(RAW("characters/" + cdir + "/CONTEXT.md"));
-      var cUseResp = await fetch(RAW("characters/" + cdir + "/USAGE.md"));
-      var cCtxText = await cCtxResp.text();
-      var cUseText = await cUseResp.text();
-      var cCtx = parseSections(cCtxText);
-      var cUse = parseSections(cUseText);
-
-      var cName = getTitle(cCtxText);
-      var cRole = getField(cCtx, "Identity", "Role in the Factory");
-      var cFeature = getField(cCtx, "Identity", "Feature Mapped To").toLowerCase();
-      var cMachineId = machDirs.find(function(d) { return d === cFeature; }) || cdir.replace("-gnome", "");
-      var cSig = getField(cUse, "Visual Identity", "Distinguishing features") || getField(cUse, "Visual Identity", "Signature props") || "";
-      var cPrompt = getCodeBlock(cUse["Prompt Fragments"] || "") || getCodeBlock(cUseText);
-      var cRefs = getImageRefs(cUse["Canonical Assets"] || cUseText);
-      if (cRefs.length === 0) cRefs.push("spark_produce-green.png");
-
-      characters.push({
-        id: cdir, name: cName, title: cRole, machine: cMachineId,
-        signature: cSig, prompt: cPrompt, refs: cRefs
-      });
-    } catch(e) { console.warn("Character " + cdir + ":", e); }
-  }
-
-  // Fetch environments
-  var environments = [];
-  for (var k = 0; k < envDirs.length; k++) {
-    var edir = envDirs[k];
-    try {
-      var eCtxResp = await fetch(RAW("environments/" + edir + "/CONTEXT.md"));
-      var eUseResp = await fetch(RAW("environments/" + edir + "/USAGE.md"));
-      var eCtxText = await eCtxResp.text();
-      var eUseText = await eUseResp.text();
-      var eCtx = parseSections(eCtxText);
-
-      var eName = getTitle(eCtxText);
-      var eDesc = getField(eCtx, "Business Context", "What it represents") || getField(eCtx, "Identity", "Role");
-      var ePrompt = getCodeBlock(eUseText);
-      var eRefs = getImageRefs(eUseText);
-      if (eRefs.length === 0) eRefs.push("factory-exterior-1.png");
-
-      environments.push({ id: edir, name: eName, desc: eDesc, prompt: ePrompt, refs: eRefs });
-    } catch(e) { console.warn("Env " + edir + ":", e); }
-  }
-
-  // Sort machines in pipeline order
-  var order = ["produce", "package", "publish", "prove", "preserve"];
-  machines.sort(function(a, b) { return order.indexOf(a.id) - order.indexOf(b.id); });
+  var environments = manifest.environments.map(function(e) {
+    return {
+      id: e.id, name: e.name,
+      desc: (ENVS.find(function(fb) { return fb.id === e.id; }) || {}).desc || "",
+      prompt: (ENVS.find(function(fb) { return fb.id === e.id; }) || {}).prompt || "",
+      refs: e.canonicalAssets.map(function(a) { return a.file; }),
+    };
+  });
 
   return {
     machines: machines, characters: characters, environments: environments,

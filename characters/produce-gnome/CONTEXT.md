@@ -1,3 +1,17 @@
+---
+id: produce-gnome
+type: character
+name: "Spark"
+title: "Master Producer"
+feature: Produce
+machine: produce
+accent: "#4CAF50"
+canonical_assets:
+  - role: character-identity
+    file: "spark_produce-green.png"
+    path: "characters/produce-gnome/canonical/spark_produce-green.png"
+---
+
 # Spark — Context
 
 ## Identity

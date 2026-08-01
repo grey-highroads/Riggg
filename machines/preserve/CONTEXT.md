@@ -1,3 +1,16 @@
+---
+id: preserve
+type: machine
+name: "The Memory Vault"
+feature: Preserve
+operator: preserve-gnome
+accent: "#FF9800"
+canonical_assets:
+  - role: machine-identity
+    file: "memory-vault_preserve-amber.png"
+    path: "machines/preserve/canonical/memory-vault_preserve-amber.png"
+---
+
 # The Memory Vault — Context
 
 ## Feature Identity

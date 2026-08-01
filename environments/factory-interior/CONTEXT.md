@@ -1,3 +1,13 @@
+---
+id: factory-interior
+type: environment
+name: "Factory Interior"
+canonical_assets:
+  - role: environment-reference
+    file: "factory-interior-1.png"
+    path: "environments/factory-interior/canonical/factory-interior-1.png"
+---
+
 # Factory Interior — Context
 
 ## Identity

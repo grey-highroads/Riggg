@@ -1,3 +1,16 @@
+---
+id: produce
+type: machine
+name: "The Capture Rig"
+feature: Produce
+operator: produce-gnome
+accent: "#4CAF50"
+canonical_assets:
+  - role: machine-identity
+    file: "capture-rig_produce-green.png"
+    path: "machines/produce/canonical/capture-rig_produce-green.png"
+---
+
 # The Capture Rig — Context
 
 ## Feature Identity

@@ -1,3 +1,17 @@
+---
+id: prove-gnome
+type: character
+name: "Lens"
+title: "Chief Analyst"
+feature: Prove
+machine: prove
+accent: "#E91E63"
+canonical_assets:
+  - role: character-identity
+    file: "lens_prove-red.png"
+    path: "characters/prove-gnome/canonical/lens_prove-red.png"
+---
+
 # Lens — Context
 
 ## Identity
