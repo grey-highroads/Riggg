@@ -86,6 +86,12 @@ function getRefs(machs, chars, envs) {
 var REPO = "grey-highroads/Riggg";
 var RAW = function(path) { return "https://raw.githubusercontent.com/" + REPO + "/main/" + path; };
 
+// ─── Image Generation Worker ───────────────────────────────────────
+// The Worker holds the OpenAI API key and fetches canonical refs server-side.
+// WORKER_AUTH is baked in at build time from Vercel's VITE_RIGGG_AUTH env var.
+var WORKER_URL = "https://riggg-image-gen.grey-4fe.workers.dev";
+var WORKER_AUTH = import.meta.env.VITE_RIGGG_AUTH || "";
+
 var COLOR_NAMES = { "#4CAF50": "Green", "#9C27B0": "Purple", "#2196F3": "Blue", "#E91E63": "Pink", "#FF9800": "Amber" };
 
 async function syncFromRepo() {
@@ -167,7 +173,7 @@ export default function RigggPromptBuilder() {
   const [copied, setCopied] = useState(false);
   const [apiKey, setApiKey] = useState("");
   const [showKeyInput, setShowKeyInput] = useState(false);
-  const [useRefs, setUseRefs] = useState(false);
+  const [useRefs, setUseRefs] = useState(true);
   const [genState, setGenState] = useState("idle"); // idle | fetching-refs | generating | done | error
   const [genMessage, setGenMessage] = useState("");
   const [genImage, setGenImage] = useState(null); // base64 data URL
@@ -251,11 +257,6 @@ export default function RigggPromptBuilder() {
   }
 
   function doGenerate() {
-    if (!apiKey.trim()) {
-      setShowKeyInput(true);
-      return;
-    }
-
     // Get the correct output size for this format
     var selectedType = TYPES.find(function(t) { return t.id === assetType; });
     var outputSize = selectedType ? selectedType.size : "1536x864";
@@ -294,7 +295,6 @@ export default function RigggPromptBuilder() {
     machs.forEach(function(id) {
       var m = activeMachines.find(function(x) { return x.id === id; });
       if (m) {
-        // Find the machine's own canonical image (not gnome or env refs)
         m.refs.forEach(function(f) {
           var entry = ASSET_REGISTRY[f];
           if (entry && entry.type === "machine" && entry.owner === id) {
@@ -325,17 +325,14 @@ export default function RigggPromptBuilder() {
       return true;
     }).slice(0, 4);
 
-    // Resolve to paths and URLs
+    // Resolve to paths (Worker will fetch these from raw.githubusercontent.com)
     var refPaths = selectedRefs.map(function(r) { return ASSET_REGISTRY[r.file].path; });
-    var refRoles = selectedRefs.map(function(r) { return r.role; });
-
-    var refUrls = refPaths.map(function(p) {
-      return "https://raw.githubusercontent.com/" + REPO + "/main/" + p;
-    });
 
     // ── Build image role label block for the prompt ──────────────────
+    var willUseRefs = useRefs && refPaths.length > 0;
+
     var imageRoleBlock = "";
-    if (useRefs && selectedRefs.length > 0) {
+    if (willUseRefs) {
       imageRoleBlock = "\n\nREFERENCE IMAGES (attached):\n";
       selectedRefs.forEach(function(r, i) {
         imageRoleBlock += "Image " + (i + 1) + ": " + r.role + "\n";
@@ -343,69 +340,37 @@ export default function RigggPromptBuilder() {
       imageRoleBlock += "Use these images as strict style and identity references. Match the rendering quality, material properties, and character proportions shown in the references.";
     }
 
-    // Append image role labels to the prompt when using refs
-    var generationPrompt = prompt + imageRoleBlock;
+    var generationPrompt = willUseRefs ? (prompt + imageRoleBlock) : prompt;
 
-    if (!useRefs || refUrls.length === 0) {
-      // Text-only generation via /v1/images/generations
-      setGenState("generating");
-      setGenMessage("Generating (text-only) — 30-60 seconds...");
-      setGenImage(null);
-      setGenError("");
-
-      fetch("https://api.openai.com/v1/images/generations", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "Authorization": "Bearer " + apiKey.trim() },
-        body: JSON.stringify({ model: "gpt-image-2", prompt: prompt, n: 1, size: outputSize, quality: "high" })
-      }).then(function(r) {
-        if (!r.ok) return r.json().then(function(e) { throw new Error(e.error ? e.error.message : "API error " + r.status); });
-        return r.json();
-      }).then(function(data) {
-        if (data.data && data.data[0]) {
-          var img = data.data[0];
-          setGenImage(img.b64_json ? "data:image/png;base64," + img.b64_json : img.url);
-          setGenState("done");
-        } else { setGenState("error"); setGenError("No image returned."); }
-      }).catch(function(err) { setGenState("error"); setGenError(err.message); });
-      return;
-    }
-
-    // Fetch reference images, then use edits endpoint with role-labeled prompt
-    setGenState("fetching-refs");
-    setGenMessage("Fetching " + refUrls.length + " reference images from repo...");
+    // ── Call the Worker ──────────────────────────────────────────────
+    // The Worker holds the OpenAI key, fetches ref PNGs from the repo,
+    // and returns the OpenAI response body verbatim.
+    setGenState(willUseRefs ? "fetching-refs" : "generating");
+    setGenMessage(
+      willUseRefs
+        ? "Sending prompt + " + refPaths.length + " reference images to renderer — 30-90 seconds..."
+        : "Generating (text-only) — 30-60 seconds..."
+    );
     setGenImage(null);
     setGenError("");
 
-    Promise.all(refUrls.map(function(url) {
-      return fetch(url).then(function(r) {
-        if (!r.ok) throw new Error("Failed to fetch: " + url.split("/").pop());
-        return r.blob();
-      });
-    })).then(function(blobs) {
-      setGenState("generating");
-      setGenMessage("Sending prompt + " + blobs.length + " reference images to renderer — 30-90 seconds...");
-
-      var formData = new FormData();
-      formData.append("model", "gpt-image-2");
-      formData.append("prompt", generationPrompt);
-      formData.append("n", "1");
-      formData.append("size", outputSize);
-      formData.append("quality", "high");
-
-      blobs.forEach(function(blob, i) {
-        var filename = refPaths[i].split("/").pop();
-        formData.append("image[]", blob, filename);
-      });
-
-      return fetch("https://api.openai.com/v1/images/edits", {
-        method: "POST",
-        headers: { "Authorization": "Bearer " + apiKey.trim() },
-        body: formData
-      });
+    fetch(WORKER_URL + "/generate", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-RIGGG-Auth": WORKER_AUTH
+      },
+      body: JSON.stringify({
+        prompt: generationPrompt,
+        size: outputSize,
+        quality: "high",
+        useRefs: willUseRefs,
+        refPaths: willUseRefs ? refPaths : []
+      })
     }).then(function(response) {
       if (!response.ok) {
         return response.json().then(function(err) {
-          throw new Error(err.error ? err.error.message : "API error " + response.status);
+          throw new Error(err.error || "Worker error " + response.status);
         });
       }
       return response.json();
@@ -416,7 +381,7 @@ export default function RigggPromptBuilder() {
         setGenState("done");
       } else {
         setGenState("error");
-        setGenError("No image returned from API.");
+        setGenError("No image returned from Worker.");
       }
     }).catch(function(err) {
       console.error("Generation failed:", err);
@@ -632,7 +597,7 @@ export default function RigggPromptBuilder() {
               <div style={{ width: 16, height: 16, borderRadius: "50%", background: "#fff", position: "absolute", top: 2, left: useRefs ? 18 : 2, transition: "left 0.15s", boxShadow: "0 1px 3px rgba(0,0,0,0.2)" }} />
             </div>
             <span style={{ fontSize: 12.5, color: "#707060" }}>
-              {useRefs ? "Reference images ON — requires backend proxy (CORS restricted from browser)" : "Reference images OFF — text-only generation via generations endpoint"}
+              {useRefs ? "Reference images ON — uses edits endpoint with canonical assets attached" : "Reference images OFF — text-only generation via generations endpoint"}
             </span>
           </div>
         </div>
